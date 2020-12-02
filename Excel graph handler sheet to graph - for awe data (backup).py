@@ -34,6 +34,7 @@ def plotYandreturnlegendvalues(i, sname, colnos):
     return legendvalues 
 
 def plotandsave(titlestring):
+    plt.axis(ymin=5)   #minimum value for x axis - crops graph
     plt.title(titlestring)
     plt.ylabel("Count")  			#defines labels for your graph.
     plt.yscale("log") 				#logarithmic axis
