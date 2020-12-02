@@ -44,7 +44,9 @@ def plotandsave(titlestring):
 legendvalues =[]
 xlsx_filepath = ''.join(filepath, "*.xslx")
 xlsx_files = glob.glob(xlsx_filepath)
-print ('files found:', xlsx_files)
+csv_filepath = ''.join(filepath, "*.csv")
+csv_files = glob.glob(csv_filepath)
+print ('files found:', xlsx_files, csv_files)
 
 for i in xlsx_files:
     alldata = pd.read_excel(i, sheet_name=None)
@@ -56,7 +58,7 @@ for i in xlsx_files:
         x = getcontentx(i,sheetno,Xdatacolumn)
         legendvalues = plotYandreturnlegendvalues(i,sheetno,Ydatacolumns)
         plt.legend(legendvalues, bbox_to_anchor=(1, 1)) #Formats legend. for some reason there's no setting to alter line width of legend outside of making it fully custom. is dumb.
-        titlestring = '.'.join([listofsheetnames[sheetno],i[(len(filepath)-6):-5],"png"]) # makes a string for the title of graphs and for saving the files as a svg. To make png instead, change svg to png.
+        titlestring = '.'.join([listofsheetnames[sheetno],i[(len(filepath):-5],"png"]) # makes a string for the title of graphs and for saving the files as a svg. To make png instead, change svg to png.
         plotandsave(titlestring)
 
         
@@ -70,9 +72,9 @@ for i in csv_files: #not tested this at all but should be close to correct
     for each in ydatacolumns:
         y = smoothdata[each]
         plt.plot(x, y, color =colours[each], linewidth = 1.5, alpha = 0.7)
-    plt.xlabel(datalabels[xdatacolumns])
+    plt.xlabel(datalabels[xdatacolumn])
     plt.legend(datalabels[ydatacolumns], bbox_to_anchor=(1, 1))
-    titlestring = '.'.join(i[(len(filepath)-6):-5],"svg")
+    titlestring = '.'.join(i[(len(filepath):-4],"svg")
     plotandsave(titlestring)
     
         
