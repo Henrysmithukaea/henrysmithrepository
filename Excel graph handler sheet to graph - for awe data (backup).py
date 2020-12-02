@@ -59,7 +59,7 @@ for i in xlsx_files:
         x = getcontentx(i,sheetno,Xdatacolumn)
         legendvalues = plotYandreturnlegendvalues(i,sheetno,Ydatacolumns)
         plt.legend(legendvalues, bbox_to_anchor=(1, 1)) #Formats legend. for some reason there's no setting to alter line width of legend outside of making it fully custom. is dumb.
-        titlestring = '.'.join([listofsheetnames[sheetno],i[(len(filepath):-5],"png"]) # makes a string for the title of graphs and for saving the files as a svg. To make png instead, change svg to png.
+        titlestring = '.'.join([listofsheetnames[sheetno],i[len(filepath):-5],"png"]) # makes a string for the title of graphs and for saving the files as a svg. To make png instead, change svg to png.
         plotandsave(titlestring)
 
         
