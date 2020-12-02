@@ -8,7 +8,7 @@ import glob
 from pathlib import Path
 
 #defines
-filepath = 'C:/Users/hsmith/Anaconda/Anaconda script files\' #write the filepath, and at the end, include '*.xlsx'
+filepath = 'C:/Users/hsmith/Anaconda/Anaconda script files\*' #write the filepath, and at the end, include '*' - can't end in a \
 Xdatacolumn = 1 			#only column in each sheet of the doc that contains the x data
 Ydatacolumns = [3,4,5,6,7,8,9,10] 	#all columns in each sheet of the doc that contains Y data
 header_row = 2 				#row of the header (i.e the column titles)
@@ -42,10 +42,11 @@ def plotandsave(titlestring):
 
 #Script
 legendvalues =[]
-xlsx_filepath = ''.join(filepath, "*.xslx")
+xlsx_filepath = ''.join([filepath, ".xlsx"])
 xlsx_files = glob.glob(xlsx_filepath)
-csv_filepath = ''.join(filepath, "*.csv")
+csv_filepath = ''.join([filepath, ".csv"])
 csv_files = glob.glob(csv_filepath)
+print (xlsx_filepath, csv_filepath)
 print ('files found:', xlsx_files, csv_files)
 
 for i in xlsx_files:
@@ -62,20 +63,5 @@ for i in xlsx_files:
         plotandsave(titlestring)
 
         
-for i in csv_files: #not tested this at all but should be close to correct
-    alldata = pd.read_csv(i)
-    print ('Began reading', i)
-    datavalues = [list(x) for x in zip(*alldata.values)]
-    smoothdata = pd.series(datavalues).rolling(window=7)
-    datalabels = list(alldata.keys())
-    x = smoothdata[xdatacolumn]
-    for each in ydatacolumns:
-        y = smoothdata[each]
-        plt.plot(x, y, color =colours[each], linewidth = 1.5, alpha = 0.7)
-    plt.xlabel(datalabels[xdatacolumn])
-    plt.legend(datalabels[ydatacolumns], bbox_to_anchor=(1, 1))
-    titlestring = '.'.join(i[(len(filepath):-4],"svg")
-    plotandsave(titlestring)
-    
-        
+      
 print ('"My work here is done." The python executable revs a big motorcycle and drives away in a cloud of smoke. It lights a cigarette, and gazes wistfully back at you, tears forming in its eyes')
