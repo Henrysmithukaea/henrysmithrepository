@@ -39,9 +39,9 @@ def plotYandreturnlegendvalues(i, sname, colnos):
         plt.plot(x, y, color =colours[column], linewidth = 1.5, alpha = 0.7) #  There's a lot of options here, e.g 'o' means it plots as dots. you may want to add 'color =colours[each], ' - this will then use the colours specified in defines
     return legendvalues 
 
-def plotandsave(titlestring):
+def plotandsave(titlestring,yv):
     plt.title(titlestring)
-    plt.axis(ymin=5)
+    plt.axis(ymin=yv)
     plt.ylabel("Count")  			#defines labels for your graph.
     plt.yscale("log") 				#logarithmic axis
     plt.savefig(titlestring, bbox_inches='tight') #this will throw a bunch of .png files into the folder specified in filepath, overwriting anything with the same name.
@@ -70,7 +70,7 @@ for each in xlsx_files:
         legendvalues = plotYandreturnlegendvalues(i,sheetno,Ydatacolumns)
         plt.legend(legendvalues, bbox_to_anchor=(1, 1)) #Formats legend. for some reason there's no setting to alter line width of legend outside of making it fully custom. is dumb.
         titlestring = '.'.join([listofsheetnames[sheetno],each[len(filepath):-5],"png"]) # makes a string for the title of graphs and for saving the files as a svg. To make png instead, change svg to png.
-        plotandsave(titlestring)
+        plotandsave(titlestring,5)
     for sheetno in specific_sheets:
         print ('reading sheet', listofsheetnames[sheetno])
         ydata = pd.read_excel(i, sheet_name = sheetno, usecols = Ymultiplotcolumn, header = header_row)    
@@ -100,6 +100,6 @@ for i in csv_files:
     plt.xlabel(datalabels[Xdatacolumn])
     plt.legend(datalabels[Ydatacolumns], bbox_to_anchor=(1, 1))
     titlestring = '.'.join([i[len(filepath):-4],"svg"])
-    plotandsave(titlestring)
+    plotandsave(titlestring,5)
          
 print ('"My work here is done." The python executable revs a big motorcycle and drives away in a cloud of smoke. It lights a cigarette, and gazes wistfully back at you, tears forming in its eyes')
