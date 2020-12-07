@@ -1,3 +1,4 @@
+
 # henry.smith@ukaea.uk
 
 
@@ -5,6 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import matplotlib.axes as axes
+import matplotlib.patches as patches
 import glob
 from pathlib import Path
 
@@ -14,11 +16,12 @@ Xdatacolumn = 1 			#only column in each sheet of the doc that contains the x dat
 Ydatacolumns = [3,4,5,6,7,8,9,10] 	#all columns in each sheet of the doc that contains Y data
 Ymultiplotcolumn = [3]
 header_row = 2 				#row of the header (i.e the column titles)
+header_row_csv=2
 colours = ("Yellow", "Green", "Blue", "Red", "Orange", "Purple", "Black", "Teal",
            "rosybrown", "salmon", "darkgoldenrod", "lightseagreen", "darkolivegreen", "saddlebrown", "cornflowerblue",
           "fuchsia", "grey", "darkslategray", "navy", "royalblue", "lightgreen", "mediumseagreen") #will cycle through this index colouring each new graph in a new colour
 ignored_sheets = 1 			#the number of sheets in the spreadsheet you don't want processed. All of these have to be reordered to appear at the end of the list of sheets. 
-specific_sheets = [2,3,4,5,6,8,12,13,14,16,18,20]
+specific_sheets = [2,3,4,5,6,7,8,9,10,11] # the sheets you want included in your comparison plt
 
 #Command defines
 
@@ -42,7 +45,8 @@ def plotYandreturnlegendvalues(i, sname, colnos):
 def plotandsave(titlestring,yv):
     plt.title(titlestring)
     plt.axis(ymin=yv)
-    plt.ylabel("Count")  			#defines labels for your graph.
+    plt.ylabel("Count")
+    plt.rcParams.update({"savefig.facecolor":  ('white'),})  			#defines labels for your graph.
     plt.yscale("log") 				#logarithmic axis
     plt.savefig(titlestring, bbox_inches='tight') #this will throw a bunch of .png files into the folder specified in filepath, overwriting anything with the same name.
     plt.show()				#shows you the graph that was saved
@@ -62,8 +66,6 @@ for each in xlsx_files:
     listofsheetnames = list(alldata.keys())
     sheetcount = len(listofsheetnames) - ignored_sheets
     print ('Began reading', i, 'and found', sheetcount, 'sheets in this document.', listofsheetnames)
-    print (alldata.keys)
-    print (listofsheetnames)
     for sheetno in range (sheetcount):
         print ('reading sheet', listofsheetnames[sheetno])
         x = getcontentx(i,sheetno,Xdatacolumn)
@@ -81,11 +83,9 @@ for each in xlsx_files:
         plt.plot(x, y, color = colours[sheetno], linewidth = 1.5, alpha = 0.7)
     legendvalues= (list(listofsheetnames[x] for x in specific_sheets))
     plt.legend(legendvalues, bbox_to_anchor=(1, 1)) 
-    titlestring = "comparison.svg"
+    titlestring = "comparison.png"
     plotandsave(titlestring,500)               
              
-                  
-        
         
 for i in csv_files:
     alldata = pd.read_csv(i, header= header_row_csv)
