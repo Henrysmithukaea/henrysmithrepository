@@ -45,8 +45,8 @@ def plotYandreturnlegendvalues(i, sname, colnos):
 def plotandsave(titlestring,yv):
     plt.title(titlestring)
     plt.axis(ymin=yv)
-    plt.ylabel("Count")
-    plt.rcParams.update({"savefig.facecolor":  ('white'),})  			#defines labels for your graph.
+    plt.ylabel("Count") 			#defines labels for your graph.
+    plt.rcParams.update({"savefig.facecolor":  ('white'),"figure.figsize": (18.5, 10)})  			#big nice pngs
     plt.yscale("log") 				#logarithmic axis
     plt.savefig(titlestring, bbox_inches='tight') #this will throw a bunch of .png files into the folder specified in filepath, overwriting anything with the same name.
     plt.show()				#shows you the graph that was saved
