@@ -68,6 +68,9 @@ for each in xlsx_files:
     print ('Began reading', i, 'and found', sheetcount, 'sheets in this document.', listofsheetnames)
     for sheetno in range (sheetcount):
         print ('reading sheet', listofsheetnames[sheetno])
+        multiplierdata = pd.read_excel(i, sheet_name = sheetno, usecols = [13], header = header_row)
+        ymultiplier = multiplierdata.iat[6,0]
+        print (ymultiplier) # hey look i can pull a single data point out from the entire graph that's useful because we can use it to use a multiplier on our data with a for loop at a later stage presumably.
         x = getcontentx(i,sheetno,Xdatacolumn)
         legendvalues = plotYandreturnlegendvalues(i,sheetno,Ydatacolumns)
         plt.legend(legendvalues, bbox_to_anchor=(1, 1)) #Formats legend. for some reason there's no setting to alter line width of legend outside of making it fully custom. is dumb.
