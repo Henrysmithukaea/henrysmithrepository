@@ -14,7 +14,7 @@ from pathlib import Path
 filepath = 'C:/Users/hsmith/Anaconda/Anaconda script files\*' #write the filepath, and at the end, include '*' - can't end in a \
 Xdatacolumn = 1 			#only column in each sheet of the doc that contains the x data
 Ydatacolumns = [3,4,5,6,7,8,9,10] 	#all columns in each sheet of the doc that contain Y data
-Ymultiplotcolumn = [3]
+Ymultiplotcolumn = [11]
 header_row = 2 				#row of the header (i.e the column titles)
 header_row_csv=2
 smoothfactor =50 #window size for the rolling window average we take
@@ -82,25 +82,23 @@ for each in xlsx_files:
         x = getcontentx(i,sheetno,Xdatacolumn)
         legendvalues = plotYandreturnlegendvalues(i,sheetno,Ydatacolumns)
         plt.legend(legendvalues, bbox_to_anchor=(1, 1)) #Formats legend. for some reason there's no setting to alter line width of legend outside of making it fully custom. is dumb.
-        titlestring = '.'.join([listofsheetnames[sheetno],each[len(filepath):-5],"png"]) # makes a string for the title of graphs and for saving the files as a svg. To make png instead, change svg to png.
+        titlestring = '.'.join([each[(len(filepath)-1):-5],listofsheetnames[sheetno],"png"]) # makes a string for the title of graphs and for saving the files as a svg. To make png instead, change svg to png.
         plotandsave(titlestring,"Count",5)
     for sheetno in specific_sheets:
         print ('reading sheet', listofsheetnames[sheetno])
         hst = pd.read_excel(i, sheet_name = sheetno, usecols = [14], header = header_row)
-        print (hst.iat[27,0])
-        histopoint.append(hst.iat[27,0])
-        print (histopoint) # hey look i can pull a single data point out from the entire graph that's useful because we can use it to use a multiplier on our data with a for loop at a later stage presumably.
+        histopoint.append(hst.iat[27,0]) # hey look i can pull a single data point out from the entire graph that's useful we can append it and make it a histogram
         ydata = pd.read_excel(i, sheet_name = sheetno, usecols = Ymultiplotcolumn, header = header_row)    
         indexedydata = [list(x) for x in zip(*ydata.values)]
         y = pd.Series(indexedydata[0]).rolling(window=smoothfactor).mean()
         x = getcontentx(i,sheetno,Xdatacolumn)
-        print (colours[sheetno])
         plt.plot(x, y, color = colours[sheetno], linewidth = 1.5, alpha = 0.7)
     legendvalues= (list(listofsheetnames[x] for x in specific_sheets))
     plt.legend(legendvalues, bbox_to_anchor=(1, 1)) 
-    plotandsave("comparison.png","D flux (N m⁻²s⁻ˡ)",500)
-    plt.bar(legendvalues, histopoint) 
-    plotandsavelin('histogram.png',"total D/cm² e17",0)
+    plotandsavelin("Comparison of D release over time for each sample","total D atoms per m²s",0)
+    plt.bar(legendvalues, histopoint,color = (list(colours[x] for x in specific_sheets)), alpha = 0.7) 
+    plotandsavelin('Comparison of total D release for each sample',"total D atoms per cm² e17",0)
+    
         
 for i in csv_files:
     alldata = pd.read_csv(i, header= header_row_csv)
