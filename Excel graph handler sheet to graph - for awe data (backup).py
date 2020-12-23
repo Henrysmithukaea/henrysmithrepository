@@ -17,12 +17,14 @@ Ydatacolumns = [3,4,5,6,7,8,9,10] 	#all columns in each sheet of the doc that co
 Ymultiplotcolumn = [11]
 header_row = 2 				#row of the header (i.e the column titles)
 header_row_csv=2
+histrow = 27
+histcol = [14]
 smoothfactor =50 #window size for the rolling window average we take
 colours = ("Yellow", "Green", "Blue", "Red", "Orange", "Purple", "Black", "Teal",
            "rosybrown", "salmon", "darkgoldenrod", "lightseagreen", "darkolivegreen", "saddlebrown", "cornflowerblue",
           "fuchsia", "grey", "darkslategray", "navy", "royalblue", "lightgreen", "mediumseagreen") #will cycle through this index colouring each new graph in a new colour
-ignored_sheets = 1 			#the number of sheets in the spreadsheet you don't want processed. All of these have to be reordered to appear at the end of the list of sheets. 
-specific_sheets = [2,3,4,5,6,7,8,9,10,11] # the sheets you want included in your comparison plt
+ignored_sheets = 2			#the number of sheets in the spreadsheet you don't want processed. All of these have to be reordered to appear at the end of the list of sheets. 
+specific_sheets = [0,3,4,5,6,7,8,9,10,11,12] # the sheets you want included in your comparison plt
 
 #Command defines
 
@@ -47,7 +49,7 @@ def plotandsave(titlestring,ystring,yv):
     plt.title(titlestring)
     plt.axis(ymin=yv)
     plt.ylabel(ystring) 			#defines labels for your graph. "D flux (N m⁻²s⁻ˡ)"
-    plt.rcParams.update({"savefig.facecolor":  ('white'),"figure.figsize": (18.5, 10)})  			#big nice pngs
+    plt.rcParams.update({"savefig.facecolor":  ('white'),"figure.figsize": (14, 8)})  			#big nice pngs
     plt.yscale("log") 				#logarithmic axis
     plt.savefig(titlestring, bbox_inches='tight') #this will throw a bunch of .png files into the folder specified in filepath, overwriting anything with the same name.
     plt.show()				#shows you the graph that was saved
@@ -56,7 +58,7 @@ def plotandsavelin(titlestring,ystring,yv):
     plt.title(titlestring)
     plt.axis(ymin=yv)
     plt.ylabel(ystring) 			#defines labels for your graph. "D flux (N m⁻²s⁻ˡ)"
-    plt.rcParams.update({"savefig.facecolor":  ('white'),"figure.figsize": (18.5, 10)})  			#big nice pngs
+    plt.rcParams.update({"savefig.facecolor":  ('white'),"figure.figsize": (14, 18)})  			#big nice pngs
     plt.savefig(titlestring, bbox_inches='tight') #this will throw a bunch of .png files into the folder specified in filepath, overwriting anything with the same name.
     plt.show()				#shows you the graph that was saved
 
@@ -86,8 +88,8 @@ for each in xlsx_files:
         plotandsave(titlestring,"Count",5)
     for sheetno in specific_sheets:
         print ('reading sheet', listofsheetnames[sheetno])
-        hst = pd.read_excel(i, sheet_name = sheetno, usecols = [14], header = header_row)
-        histopoint.append(hst.iat[27,0]) # hey look i can pull a single data point out from the entire graph that's useful we can append it and make it a histogram
+        hst = pd.read_excel(i, sheet_name = sheetno, usecols = histcol, header = header_row)
+        histopoint.append(hst.iat[histrow,0]) # hey look i can pull a single data point out from the entire graph that's useful we can append it and make it a histogram
         ydata = pd.read_excel(i, sheet_name = sheetno, usecols = Ymultiplotcolumn, header = header_row)    
         indexedydata = [list(x) for x in zip(*ydata.values)]
         y = pd.Series(indexedydata[0]).rolling(window=smoothfactor).mean()
@@ -95,7 +97,7 @@ for each in xlsx_files:
         plt.plot(x, y, color = colours[sheetno], linewidth = 1.5, alpha = 0.7)
     legendvalues= (list(listofsheetnames[x] for x in specific_sheets))
     plt.legend(legendvalues, bbox_to_anchor=(1, 1)) 
-    plotandsavelin("Comparison of D release over time for each sample","total D atoms per m²s",0)
+    plotandsave("Log comparison of D release over time for each sample","total D atoms per m²s",100000000000000)
     plt.bar(legendvalues, histopoint,color = (list(colours[x] for x in specific_sheets)), alpha = 0.7) 
     plotandsavelin('Comparison of total D release for each sample',"total D atoms per cm² e17",0)
     
