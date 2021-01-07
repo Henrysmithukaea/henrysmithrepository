@@ -1,0 +1,160 @@
+
+# henry.smith@ukaea.uk
+work extremely in progress
+
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
+import matplotlib.axes as axes
+import matplotlib.patches as patches
+import glob
+from pathlib import Path
+
+#defines
+filepath = 'N:/CCFE/H3AT/TritiumScience/Tritium Research/Tricem/Data/Science/ScienceRun3-D2/S87\*' #write the filepath, and at the end, include '*' - can't end in a \
+daqXcolumn = 0 			#only column in each sheet of the doc that contains the x data. This is the sample data column, giving us Time in Seconds
+daqYcolumns = [2,3,4,5] 	#all columns in each sheet of the doc that contain Y data
+daqheaderrow = 2 				#row of the header (i.e the column titles)
+
+diodeXcolumn
+diodeYcolumn
+diodeheaderrow
+
+colours = ("Yellow", "Green", "Blue", "Red", "Orange", "Purple", "Black", "Teal",
+           "rosybrown", "salmon", "darkgoldenrod", "lightseagreen", "darkolivegreen", "saddlebrown", "cornflowerblue",
+          "fuchsia", "grey", "darkslategray", "navy", "royalblue", "lightgreen", "mediumseagreen") #will cycle through this index colouring each new graph in a new colour
+noisebound = 10 # if the absolute value is less than the noise boundary, the data point is treated as noise
+
+
+#Command defines
+
+def getcontentx(i, colno):
+    data = pd.read_excel(i, sheet_name = 0, usecols = [colno], header = header_row)
+    indexeddata = [list(x) for x in zip(*data.values)]
+    x = pd.Series(indexeddata[0]).rolling(window=10).mean()
+    plt.xlabel(data.columns[0])  	# column header becomes the x axis title. You can replace this with any string you like.
+    return x
+
+def plotYandreturnlegendvalues(i, colnos):
+    data = pd.read_excel(i, sheet_name = 0, usecols = colnos, header = header_row)
+    indexeddata = [list(x) for x in zip(*data.values)] #pulls out the data
+    legendvalues = (data.columns)
+    print (legendvalues)
+    for column in range(len(colnos)): 
+        y = pd.Series(indexeddata[column]).rolling(window=smoothfactor).mean() 		#pulls out a column in the data
+        plt.plot(x, y, color =colours[column], linewidth = 1.5, alpha = 0.7) #  There's a lot of options here, e.g 'o' means it plots as dots. you may want to add 'color =colours[each], ' - this will then use the colours specified in defines
+    return legendvalues 
+
+def plotandsave(titlestring,ystring,yv):
+    plt.title(titlestring)
+    plt.axis(ymin=yv)
+    plt.ylabel(ystring) 			#defines labels for your graph. "D flux (N m⁻²s⁻ˡ)"
+    plt.rcParams.update({"savefig.facecolor":  ('white'),"figure.figsize": (14, 10)})  			#big nice pngs
+    plt.yscale("log") 				#logarithmic axis
+    plt.savefig(titlestring, bbox_inches='tight') #this will throw a bunch of .png files into the folder specified in filepath, overwriting anything with the same name.
+    plt.show()				#shows you the graph that was saved
+
+def loadfirstfilematching(name)
+    filefind = ''.join([filepath, name])
+    files = glob.glob(filefind)
+    print ('Began reading', files[0])
+    return files[0]
+    
+    
+# The Actual Script
+
+###daq
+daqfile = loadfirstfilematching("daq.csv")
+daqdata = pd.read_csv(daqfile, header=daqheaderrow)
+datavalues = [list(x) for x in zip(*daqdata.values)]
+datalabels = daqdata.columns
+print(datalabels)
+x = datavalues[daqXcolumn]
+for each in daqYcolumn:
+    y = pd.Series(datavalues[each]).rolling(window=smoothfactor).mean()
+    plt.plot(x, y, color =colours[each], linewidth = 1.5, alpha = 0.7)
+plt.xlabel(datalabels[daqXcolumn])
+plt.legend(datalabels[daqYcolumn], bbox_to_anchor=(1, 1))
+titlestring = '.'.join([i[len(daqfile):-10],"Pressure in System" ,"svg"])
+plotandsave(titlestring,"pressure/V", "Time/S",5)
+
+###diode
+diodefile = loadfirstfilematching("diode.csv")
+diodedata = pd.read_csv(diodefile, header=diodeheaderrow)
+datavalues = [list(x) for x in zip(*diodedata.values)]
+datalabels = diodedata.columns
+print(datalabels)
+x = datavalues[diodeXcolumn]
+for each in daqYcolumn:
+    y = pd.Series(datavalues[each]).rolling(window=smoothfactor).mean()
+    plt.plot(x, y, color =colours[each], linewidth = 1.5, alpha = 0.7)
+plt.xlabel(datalabels[diodeXcolumn])
+plt.legend(datalabels[diodeYcolumn], bbox_to_anchor=(1, 1))
+titlestring = '.'.join([i[len(filepath):-4],"svg"])
+plotandsave(titlestring,"power/W", "Time/MS",5)
+
+
+
+
+print (xlsx_filepath, csv_filepath)
+print ('files found:', xlsx_files, csv_files)
+for each in xlsx_files:
+    i = pd.ExcelFile(each)  #loads the entire excel file into python, where it can be picked apart by by read_excel very quickly.
+    alldata = pd.read_excel(i, sheet_name=0)
+    sv =[]
+    sn=[]
+    dataa = pd.read_excel(i, sheet_name = 0, usecols = col, header = header_row)
+    enumerateddata = [list(x) for x in zip(*dataa.values)]
+    print (enumerateddata)
+    findlowerboundofcurve(enumerateddata, sv)
+    findupperboundofcurve(enumerateddata, sv[5], sw)
+    
+    
+    
+    
+        
+for i in csv_files:
+    alldata = pd.read_csv(i, header= header_row_csv)
+    print ('Began reading', i)
+    datavalues = [list(x) for x in zip(*alldata.values)]
+    datalabels = alldata.columns
+    print(datalabels)
+    x = pd.Series(datavalues[Xdatacolumn]).rolling(window=smoothfactor).mean()
+    for each in Ydatacolumns:
+        y = pd.Series(datavalues[each]).rolling(window=smoothfactor).mean()
+        plt.plot(x, y, color =colours[each], linewidth = 1.5, alpha = 0.7)
+    plt.xlabel(datalabels[Xdatacolumn])
+    plt.legend(datalabels[Ydatacolumns], bbox_to_anchor=(1, 1))
+    titlestring = '.'.join([i[len(filepath):-4],"svg"])
+    plotandsave(titlestring,"count",5)
+         
+        
+        
+def findlowerboundofcurve(enumerateddata, lb)
+    for each in enumerateddata:
+        if (abs(enumerateddata[each])>=noisebound):
+            if (each-previous)<10:
+                previous = each
+                if len(lb)>5:
+                    print (lb)
+                    return lb
+                    break
+            else:
+                sv=[each]
+                previous = each
+                
+def findupperboundofcurve(enumerateddata, lowerstart,ub)     
+    for each in enumerateddata[lowerstart:]:
+        if abs(enumerateddata[each])<=noisebound:
+            if (each-previous)<10:
+                ub.append(each)
+                previous = each
+                if len(ub)>5:
+                    print (ub)
+                    return ub
+                    break
+            else:
+                ub=[each]
+                previous = each
+        
+print ('"My work here is done." The python executable begins rotating rapidly, emitting a noise like a boiling kettle. As the noise reaches the cadence of a piercing shriek, the executable explodes into a puff of opalescent glitter and vanishes.)
