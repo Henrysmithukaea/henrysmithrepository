@@ -1,6 +1,6 @@
 
 # henry.smith@ukaea.uk
-work extremely in progress
+
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -14,11 +14,16 @@ from pathlib import Path
 filepath = 'N:/CCFE/H3AT/TritiumScience/Tritium Research/Tricem/Data/Science/ScienceRun3-D2/S87\*' #write the filepath, and at the end, include '*' - can't end in a \
 daqXcolumn = 0 			#only column in each sheet of the doc that contains the x data. This is the sample data column, giving us Time in Seconds
 daqYcolumns = [2,3,4,5] 	#all columns in each sheet of the doc that contain Y data
-daqheaderrow = 2 				#row of the header (i.e the column titles)
+daqheaderrow = 7 				#row of the header (i.e the column titles)
 
-diodeXcolumn
-diodeYcolumn
-diodeheaderrow
+diodeXcolumn = 0 			#only column in each sheet of the doc that contains the x data. This is the sample data column, giving us Time in Seconds
+diodeYcolumns = [2,3,4,5] 	#all columns in each sheet of the doc that contain Y data
+diodeheaderrow = 7 				#row of the header (i.e the column titles)
+
+rXcolumn =0
+rYcolumn =1
+rheaderrow = 7
+resistorohms =1234
 
 colours = ("Yellow", "Green", "Blue", "Red", "Orange", "Purple", "Black", "Teal",
            "rosybrown", "salmon", "darkgoldenrod", "lightseagreen", "darkolivegreen", "saddlebrown", "cornflowerblue",
@@ -45,12 +50,12 @@ def plotYandreturnlegendvalues(i, colnos):
         plt.plot(x, y, color =colours[column], linewidth = 1.5, alpha = 0.7) #  There's a lot of options here, e.g 'o' means it plots as dots. you may want to add 'color =colours[each], ' - this will then use the colours specified in defines
     return legendvalues 
 
-def plotandsave(titlestring,ystring,yv):
+def plotandsave(titlestring,xstring,ystring,yv):
     plt.title(titlestring)
     plt.axis(ymin=yv)
+    plt.xlabel(xstring) 
     plt.ylabel(ystring) 			#defines labels for your graph. "D flux (N m⁻²s⁻ˡ)"
     plt.rcParams.update({"savefig.facecolor":  ('white'),"figure.figsize": (14, 10)})  			#big nice pngs
-    plt.yscale("log") 				#logarithmic axis
     plt.savefig(titlestring, bbox_inches='tight') #this will throw a bunch of .png files into the folder specified in filepath, overwriting anything with the same name.
     plt.show()				#shows you the graph that was saved
 
@@ -73,10 +78,9 @@ x = datavalues[daqXcolumn]
 for each in daqYcolumn:
     y = pd.Series(datavalues[each]).rolling(window=smoothfactor).mean()
     plt.plot(x, y, color =colours[each], linewidth = 1.5, alpha = 0.7)
-plt.xlabel(datalabels[daqXcolumn])
 plt.legend(datalabels[daqYcolumn], bbox_to_anchor=(1, 1))
-titlestring = '.'.join([i[len(daqfile):-10],"Pressure in System" ,"svg"])
-plotandsave(titlestring,"pressure/V", "Time/S",5)
+titlestring = '.'.join([i[len(daqfile):-8],"Pressure in System" ,"svg"])
+plotandsave(titlestring,"pressure/V", "Time/S",0)
 
 ###diode
 diodefile = loadfirstfilematching("diode.csv")
@@ -88,13 +92,39 @@ x = datavalues[diodeXcolumn]
 for each in daqYcolumn:
     y = pd.Series(datavalues[each]).rolling(window=smoothfactor).mean()
     plt.plot(x, y, color =colours[each], linewidth = 1.5, alpha = 0.7)
-plt.xlabel(datalabels[diodeXcolumn])
+plt.legend(datalabels[diodeYcolumn], bbox_to_anchor=(1, 1))
+titlestring = '.'.join([i[len(filepath):-10],"light output to diode" ,"svg"])
+plotandsave(titlestring,"power/W","Time/MS",0)
+
+
+
+###r1/r2
+r1file = loadfirstfilematching("R1.csv")
+r1data = pd.read_csv(r1file, header=r1headerrow)
+datavalues = [list(x) for x in zip(*r1data.values)]
+datavaluesii = [list(x) for x in zip(*r1data.values)]
+x = datavalues[rXcolumn]
+r1 = pd.Series(datavalues[rYcolumn]).rolling(window=smoothfactor).mean()
+r2 = pd.Series(datavalues[rYcolumn]).rolling(window=smoothfactor).mean()
+r1overr2=[]
+current=[]
+for each in r1
+    r1overr2.append((r1[each]/r2[each]))
+    current.append((r1[each]/resistorohms))
+    currentr2.append((r1[each]/resistorohms))
+plt.plot(x, r1overr2, color =colours[each], linewidth = 1.5, alpha = 0.7)
+titlestring = '.'.join([i[len(filepath):-7],"svg"])
+plotandsave(titlestring,"power/W", "Time/MS",0)
+plt.plot(x, r1overr2, color =colours[each], linewidth = 1.5, alpha = 0.7)
+titlestring = '.'.join([i[len(filepath):-7],"svg"])
+plotandsave(titlestring,"power/W", "Time/MS",0)
+
+
+
+plt.plot(x, current, color =colours[each], linewidth = 1.5, alpha = 0.7)
 plt.legend(datalabels[diodeYcolumn], bbox_to_anchor=(1, 1))
 titlestring = '.'.join([i[len(filepath):-4],"svg"])
-plotandsave(titlestring,"power/W", "Time/MS",5)
-
-
-
+plotandsave(titlestring,"power/W", "Time/MS",0)
 
 print (xlsx_filepath, csv_filepath)
 print ('files found:', xlsx_files, csv_files)
@@ -134,6 +164,7 @@ def findlowerboundofcurve(enumerateddata, lb)
     for each in enumerateddata:
         if (abs(enumerateddata[each])>=noisebound):
             if (each-previous)<10:
+                lb.append(each)
                 previous = each
                 if len(lb)>5:
                     print (lb)
@@ -157,4 +188,4 @@ def findupperboundofcurve(enumerateddata, lowerstart,ub)
                 ub=[each]
                 previous = each
         
-print ('"My work here is done." The python executable begins rotating rapidly, emitting a noise like a boiling kettle. As the noise reaches the cadence of a piercing shriek, the executable explodes into a puff of opalescent glitter and vanishes.)
+print ('"My work here is done." The python executable revs a big motorcycle and drives away in a cloud of smoke. It lights a cigarette, and gazes wistfully back at you, tears forming in its eyes')
