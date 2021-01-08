@@ -14,18 +14,18 @@ from pathlib import Path
 filepath = 'N:/CCFE/H3AT/TritiumScience/Tritium Research/Tricem/Data/Science/ScienceRun3-D2/S87\*' #write the filepath, and at the end, include '*' - can't end in a \
 smoothfactor =3
 
-daqXcolumn = 0 			#only column in each sheet of the doc that contains the x data. seems we increments seconds by 1 each time, so range() will work
+daqXcolumn = 0 			#UNUSED. seems we increments seconds by 1s each timestep, so range() will work
 daqYcolumns = [2,3,4,5] 	#all columns in each sheet of the doc that contain Y data
-daqYcolumnsb = [2,3,4,5] #the header is consistently misaligned because pandas automatically throws away row 1 if there are more columns than headers
+daqYcolumnsb = [2,3,4,5] #the header can sometimes be misaligned because pandas automatically throws away row 1 if there are more columns than headers
 daqheaderrow = 7 				#row of the header (i.e the column titles)
 
 diodeXcolumn = 0 			#only column in each sheet of the doc that contains the x data. This is the sample data column, giving us Time in Seconds
-diodeYcolumn = 1 	#all columns in each sheet of the doc that contain Y data
+diodeYcolumn = 1 # columnthat contains Y data
 diodeheaderrow = 0 				#row of the header (i.e the column titles)
 
-rXcolumn =0
+rXcolumn =0 #UNUSED. seems we increments seconds by 1s each timestep, so range() will work and will be faster.
 rYcolumn =1
-rheaderrow = 7
+rheaderrow = 0
 resistorohms =1234
 
 colours = ("Yellow", "Green", "Blue", "Red", "Orange", "Purple", "Black", "Teal",
@@ -53,11 +53,12 @@ def plotYandreturnlegendvalues(i, colnos):
         plt.plot(x, y, color =colours[column], linewidth = 1.5, alpha = 0.7) #  There's a lot of options here, e.g 'o' means it plots as dots. you may want to add 'color =colours[each], ' - this will then use the colours specified in defines
     return legendvalues 
 
-def plotandsave(titlestring,xstring,ystring,yv):
+def plotandsave(titlestring,ystring,xstring,yv):
     plt.title(titlestring)
-    plt.axis(ymin=yv)
-    plt.xlabel(xstring) 
+    if yv is not False:
+        plt.axis(ymin=yv)
     plt.ylabel(ystring) 			#defines labels for your graph. "D flux (N m⁻²s⁻ˡ)"
+    plt.xlabel(xstring) 
     plt.rcParams.update({"savefig.facecolor":  ('white'),"figure.figsize": (14, 10)})  			#big nice pngs
     plt.savefig(titlestring, bbox_inches='tight') #this will throw a bunch of .png files into the folder specified in filepath, overwriting anything with the same name.
     plt.show()				#shows you the graph that was saved
@@ -78,6 +79,7 @@ datavalues = [list(x) for x in zip(*daqdata.values)]
 datalabels = daqdata.columns
 print(datalabels)
 x = range(len(datavalues[0]))
+
 for each in daqYcolumns:
     y = pd.Series(datavalues[each]).rolling(window=smoothfactor).mean()
     plt.plot(x, y, color =colours[each], linewidth = 1.5, alpha = 0.7)
@@ -87,11 +89,11 @@ plotandsave(titlestring,"pressure/V", "Time/S",-8)
 
 ###diode
 diodefile = loadfirstfilematching("diode.csv")
-diodedata = pd.read_csv(diodefile, header=diodeheaderrow)
+diodedata = pd.read_csv(diodefile, sep='\t', header=diodeheaderrow)
 datavalues = [list(x) for x in zip(*diodedata.values)]
 datalabels = diodedata.columns
 print(datalabels)
-x = datavalues[diodeXcolumn]
+x =  datavalues[diodeXcolumn]
 y = pd.Series(datavalues[diodeYcolumn]).rolling(window=smoothfactor).mean()
 plt.plot(x, y, color =colours[5], linewidth = 1.5, alpha = 0.7)
 plt.legend(datalabels[diodeYcolumns], bbox_to_anchor=(1, 1))
@@ -100,68 +102,42 @@ plotandsave(titlestring,"power/W","Time/MS",0)
 
 
 
-###r1/r2
-r1file = loadfirstfilematching("R1.csv")
-r1data = pd.read_csv(r1file, header=r1headerrow)
+###r1 and r2
+r1file = loadfirstfilematching("R2.csv")
+r1data = pd.read_csv(r1file, header=rheaderrow)
 datavalues = [list(x) for x in zip(*r1data.values)]
+r2 = datavalues[rYcolumn]
+r1file = loadfirstfilematching("R1.csv")
+r1data = pd.read_csv(r1file, header=rheaderrow) #using r1file for both, to conserve space in the ram lmaooo
 datavaluesii = [list(x) for x in zip(*r1data.values)]
-x = datavalues[rXcolumn]
-r1 = pd.Series(datavalues[rYcolumn]).rolling(window=smoothfactor).mean()
-r2 = pd.Series(datavalues[rYcolumn]).rolling(window=smoothfactor).mean()
+r1 = datavaluesii[rYcolumn]
+if len(r1)>len(r2):  # discards values from longer file so that r1 and r2 are the same length
+    r1 = r1[:len(r2)]
+else:
+    r2 = r2[:len(r1)]
+x = range(len(r1)) #makes a column of integers, counting from 1 up to the end of the file
 r1overr2=[]
 current=[]
-current2=[]
-for each in r1:
+currentr2=[]
+for each in x:
     r1overr2.append((r1[each]/r2[each]))
     current.append((r1[each]/resistorohms))
     currentr2.append((r2[each]/resistorohms))
 plt.plot(x, r1, color =colours[5], linewidth = 1.5, alpha = 0.7)
 plt.plot(x, r2, color =colours[6], linewidth = 1.5, alpha = 0.7)
-titlestring = '.'.join([r1file[len(filepath):-7],"R1/R2","svg"])
-plotandsave(titlestring,"power/W", "Time/MS",0)
-plt.plot(r1, r1overr2, color =colours[7], linewidth = 1.5, alpha = 0.7)
-titlestring = '.'.join([r1file[len(filepath):-7],"R1/R2 vs R1","svg"])
-plotandsave(titlestring,"power/W", "Time/MS",0)
+titlestring = '.'.join([r1file[len(filepath):-7],"R1 vs R2","svg"])
+plotandsave(titlestring,"power/W", "Time/MS",False)
+plt.plot(r1overr2, r1, color =colours[7], linewidth = 1.5, alpha = 0.7)
+titlestring = '.'.join([r1file[len(filepath):-7],"R1 ÷ R2 vs R1","svg"])
+plotandsave(titlestring,"R1/R2", "R1",False)
 plt.plot(x, current, color =colours[8], linewidth = 1.5, alpha = 0.7)
 plt.legend(datalabels[diodeYcolumn], bbox_to_anchor=(1, 1))
-titlestring = '.'.join([r1file[len(filepath):-4],"R2 Current""svg"])
-plotandsave(titlestring,"power/W", "Time/MS",0)
-
-print (xlsx_filepath, csv_filepath)
-print ('files found:', xlsx_files, csv_files)
-for each in xlsx_files:
-    i = pd.ExcelFile(each)  #loads the entire excel file into python, where it can be picked apart by by read_excel very quickly.
-    alldata = pd.read_excel(i, sheet_name=0)
-    sv =[]
-    sn=[]
-    dataa = pd.read_excel(i, sheet_name = 0, usecols = col, header = header_row)
-    enumerateddata = [list(x) for x in zip(*dataa.values)]
-    print (enumerateddata)
-    findlowerboundofcurve(enumerateddata, sv)
-    findupperboundofcurve(enumerateddata, sv[5], sw)
-    
-    
-    
-    
-        
-for i in csv_files:
-    alldata = pd.read_csv(i, header= header_row_csv)
-    print ('Began reading', i)
-    datavalues = [list(x) for x in zip(*alldata.values)]
-    datalabels = alldata.columns
-    print(datalabels)
-    x = pd.Series(datavalues[Xdatacolumn]).rolling(window=smoothfactor).mean()
-    for each in Ydatacolumns:
-        y = pd.Series(datavalues[each]).rolling(window=smoothfactor).mean()
-        plt.plot(x, y, color =colours[each], linewidth = 1.5, alpha = 0.7)
-    plt.xlabel(datalabels[Xdatacolumn])
-    plt.legend(datalabels[Ydatacolumns], bbox_to_anchor=(1, 1))
-    titlestring = '.'.join([i[len(filepath):-4],"svg"])
-    plotandsave(titlestring,"count",5)
+titlestring = '.'.join([r1file[len(filepath):-4],"R2 Current","svg"])
+plotandsave(titlestring,"power/W", "Time/MS",False)
          
         
         
-def findlowerboundofcurve(enumerateddata, lb):
+def findlowerboundofcurve(enumerateddata):
     for each in enumerateddata:
         if (abs(enumerateddata[each])>=noisebound):
             if (each-previous)<10:
@@ -175,7 +151,7 @@ def findlowerboundofcurve(enumerateddata, lb):
                 sv=[each]
                 previous = each
                 
-def findupperboundofcurve(enumerateddata, lowerstart,ub):  
+def findupperboundofcurve(enumerateddata, lowerstart):  
     for each in enumerateddata[lowerstart:]:
         if abs(enumerateddata[each])<=noisebound:
             if (each-previous)<10:
