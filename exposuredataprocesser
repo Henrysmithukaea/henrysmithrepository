@@ -84,7 +84,7 @@ for each in daqYcolumns:
     y = pd.Series(datavalues[each]).rolling(window=smoothfactor).mean()
     plt.plot(x, y, color =colours[each], linewidth = 1.5, alpha = 0.7)
 plt.legend(datalabels[daqYcolumnsb], bbox_to_anchor=(1, 1))
-titlestring = '.'.join([daqfile[len(daqfile):-8],"Pressure in System" ,"svg"])
+titlestring = '.'.join([daqfile[len(daqfile):-8],"Pressure in System" ,"png"])
 plotandsave(titlestring,"pressure/V", "Time/S",-8)
 
 ###diode
@@ -97,7 +97,7 @@ x =  datavalues[diodeXcolumn]
 y = pd.Series(datavalues[diodeYcolumn]).rolling(window=smoothfactor).mean()
 plt.plot(x, y, color =colours[5], linewidth = 1.5, alpha = 0.7)
 plt.legend(datalabels[diodeYcolumns], bbox_to_anchor=(1, 1))
-titlestring = '.'.join([diodefile[len(filepath):-10],"light output to diode" ,"svg"])
+titlestring = '.'.join([diodefile[len(filepath):-10],"light output to diode" ,"png"])
 plotandsave(titlestring,"power/W","Time/MS",0)
 
 
@@ -125,14 +125,14 @@ for each in x:
     currentr2.append((r2[each]/resistorohms))
 plt.plot(x, r1, color =colours[5], linewidth = 1.5, alpha = 0.7)
 plt.plot(x, r2, color =colours[6], linewidth = 1.5, alpha = 0.7)
-titlestring = '.'.join([r1file[len(filepath):-7],"R1 vs R2","svg"])
+titlestring = '.'.join([r1file[len(filepath):-7],"R1 vs R2","png"])
 plotandsave(titlestring,"power/W", "Time/MS",False)
 plt.plot(r1overr2, r1, color =colours[7], linewidth = 1.5, alpha = 0.7)
-titlestring = '.'.join([r1file[len(filepath):-7],"R1 ÷ R2 vs R1","svg"])
+titlestring = '.'.join([r1file[len(filepath):-7],"R1 ÷ R2 vs R1","png"])
 plotandsave(titlestring,"R1/R2", "R1",False)
 plt.plot(x, current, color =colours[8], linewidth = 1.5, alpha = 0.7)
 plt.legend(datalabels[diodeYcolumn], bbox_to_anchor=(1, 1))
-titlestring = '.'.join([r1file[len(filepath):-4],"R2 Current","svg"])
+titlestring = '.'.join([r1file[len(filepath):-4],"R2 Current","png"])
 plotandsave(titlestring,"power/W", "Time/MS",False)
          
         
