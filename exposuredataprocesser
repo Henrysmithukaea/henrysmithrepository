@@ -31,28 +31,12 @@ resistorohms =1234
 colours = ("Yellow", "Green", "Blue", "Red", "Orange", "Purple", "Black", "Teal",
            "rosybrown", "salmon", "darkgoldenrod", "lightseagreen", "darkolivegreen", "saddlebrown", "cornflowerblue",
           "fuchsia", "grey", "darkslategray", "navy", "royalblue", "lightgreen", "mediumseagreen") #will cycle through this index colouring each new graph in a new colour
-noisebound = 10 # if the absolute value is less than the noise boundary, the data point is treated as noise
+
 
 
 #Command defines
 
-def loadfilesmatching(name):
-    filefind = ''.join([filepath, name])
-    files = sorted(glob.glob(filefind,recursive=True))
-    print ('Began reading', files, len(files))
-    return files
-
-def plotYandreturnlegendvalues(i, colnos):
-    data = pd.read_excel(i, sheet_name = 0, usecols = colnos, header = header_row)
-    indexeddata = [list(x) for x in zip(*data.values)] #pulls out the data
-    legendvalues = (data.columns)
-    print (legendvalues)
-    for column in range(len(colnos)): 
-        y = pd.Series(indexeddata[column]).rolling(window=smoothfactor).mean() 		#pulls out a column in the data
-        plt.plot(x, y, color =colours[column], linewidth = 1.5, alpha = 0.7) #  There's a lot of options here, e.g 'o' means it plots as dots. you may want to add 'color =colours[each], ' - this will then use the colours specified in defines
-    return legendvalues 
-
-def plotandsave(titlestring,ystring,xstring,yv):
+def plotandsave(titlestring,ystring,xstring,yv): # shows a plot and then saves it as a .png
     plt.title(titlestring)
     if yv is not False:
         plt.axis(ymin=yv)
@@ -62,7 +46,7 @@ def plotandsave(titlestring,ystring,xstring,yv):
     plt.savefig(titlestring, bbox_inches='tight') #this will throw a bunch of .png files into the folder specified in filepath, overwriting anything with the same name.
     plt.show()				#shows you the graph that was saved
 
-def loadfilesmatching(name):
+def loadfilesmatching(name): # loads files and returns a list of them ordered by name alphabetically
     filefind = ''.join([filepath, name])
     files = sorted(glob.glob(filefind,recursive=True))
     print ('Began reading', files)
@@ -122,7 +106,7 @@ for each in range(len(r1files)):
     currentr2=[]
     for each in x:
         if r2[each] == 0:
-            r1overr2.append(0)
+            r1overr2.append(0) # checking it can actually divide by r2
         else:
             r1overr2.append((r1[each]/r2[each]))
         current.append((r1[each]/resistorohms))
@@ -139,7 +123,9 @@ for each in range(len(r1files)):
     plotandsave(titlestring,"power/W", "Time/MS",False)
 
         
-        
+# Unused defines
+noisebound = 10 # if the absolute value is less than the noise boundary, the data point is treated as noise
+
 def findlowerboundofcurve(enumerateddata):
     for each in enumerateddata:
         if (abs(enumerateddata[each])>=noisebound):
@@ -168,4 +154,4 @@ def findupperboundofcurve(enumerateddata, lowerstart):
                 ub=[each]
                 previous = each
         
-print ('"My work here is done." The python executable revs a big motorcycle and drives away in a cloud of smoke. It lights a cigarette, and gazes wistfully back at you, tears forming in its eyes')
+print ('"My work here is done." The python removes its sunglasses, revealing a pair of slightly smaller sunglasses, and exits the room.')
