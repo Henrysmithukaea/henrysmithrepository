@@ -11,7 +11,8 @@ import glob
 from pathlib import Path
 
 #defines
-filepath = 'N:/CCFE/H3AT/TritiumScience/Tritium Research/Tricem/Data/Science/ScienceRun3-D2/**\*' #write the filepath, and at the end, include '*' - can't end in a \. ** means it searches subdirectories.
+filepath = 'N:/CCFE/H3AT/TritiumScience/Tritium Research/Tricem/Data/Science/ScienceRun3-D2/**\*' #write the filepath, and at the end, include '*' - can't end in a \.
+ n                                                                                                #writing ** means it searches through all subfolders in the given directory.
 smoothfactor =3
 
 daqXcolumn = 0 			#UNUSED. seems we increments seconds by 1s each timestep, so range() will work
