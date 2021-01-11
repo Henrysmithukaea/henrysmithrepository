@@ -36,12 +36,11 @@ noisebound = 10 # if the absolute value is less than the noise boundary, the dat
 
 #Command defines
 
-def getcontentx(i, colno):
-    data = pd.read_excel(i, sheet_name = 0, usecols = [colno], header = header_row)
-    indexeddata = [list(x) for x in zip(*data.values)]
-    x = pd.Series(indexeddata[0]).rolling(window=10).mean()
-    plt.xlabel(data.columns[0])  	# column header becomes the x axis title. You can replace this with any string you like.
-    return x
+def loadfilesmatching(name):
+    filefind = ''.join([filepath, name])
+    files = sorted(glob.glob(filefind,recursive=True))
+    print ('Began reading', files, len(files))
+    return files
 
 def plotYandreturnlegendvalues(i, colnos):
     data = pd.read_excel(i, sheet_name = 0, usecols = colnos, header = header_row)
@@ -65,7 +64,7 @@ def plotandsave(titlestring,ystring,xstring,yv):
 
 def loadfilesmatching(name):
     filefind = ''.join([filepath, name])
-    files = glob.glob(filefind,recursive=True)
+    files = sorted(glob.glob(filefind,recursive=True))
     print ('Began reading', files)
     return files
     
@@ -105,7 +104,7 @@ for diodefile in diodefiles:
 
 ###r1 and r2
 r2files = loadfilesmatching("R2.csv")
-r1files = loadfilesmatching("R1.csv")# DOES NOT CHECK IT IS SYNCING THE TWO LISTS OF FILES AT THE MOMENT. you may be comparing TWO ENTIRELY DIFFERENT SAMPLES AND IT WILL NOT TELL YOU !!!
+r1files = loadfilesmatching("R1.csv")# DOES NOT CHECK THE FILES MATCH.
 for each in range(len(r1files)):
     r1data = pd.read_csv(r1files[each], header=rheaderrow)
     datavalues = [list(x) for x in zip(*r1data.values)]
