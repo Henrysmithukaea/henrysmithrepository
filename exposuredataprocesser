@@ -11,7 +11,7 @@ import glob
 from pathlib import Path
 
 #defines
-filepath = 'N:/CCFE/H3AT/TritiumScience/Tritium Research/Tricem/Data/Science/ScienceRun3-D2/S87\*' #write the filepath, and at the end, include '*' - can't end in a \
+filepath = 'N:/CCFE/H3AT/TritiumScience/Tritium Research/Tricem/Data/Science/ScienceRun3-D2/**\*' #write the filepath, and at the end, include '*' - can't end in a \. ** means it searches subdirectories.
 smoothfactor =3
 
 daqXcolumn = 0 			#UNUSED. seems we increments seconds by 1s each timestep, so range() will work
@@ -63,78 +63,79 @@ def plotandsave(titlestring,ystring,xstring,yv):
     plt.savefig(titlestring, bbox_inches='tight') #this will throw a bunch of .png files into the folder specified in filepath, overwriting anything with the same name.
     plt.show()				#shows you the graph that was saved
 
-def loadfirstfilematching(name):
+def loadfilesmatching(name):
     filefind = ''.join([filepath, name])
-    files = glob.glob(filefind)
-    print ('Began reading', files[0])
-    return files[0]
+    files = glob.glob(filefind,recursive=True)
+    print ('Began reading', files)
+    return files
     
     
 # The Actual Script
 
 ###daq
-daqfile = loadfirstfilematching("daq.csv")
-daqdata = pd.read_csv(daqfile, header=daqheaderrow)
-datavalues = [list(x) for x in zip(*daqdata.values)]
-datalabels = daqdata.columns
-print(datalabels)
-x = range(len(datavalues[0]))
-
-for each in daqYcolumns:
-    y = pd.Series(datavalues[each]).rolling(window=smoothfactor).mean()
-    plt.plot(x, y, color =colours[each], linewidth = 1.5, alpha = 0.7)
-plt.legend(datalabels[daqYcolumnsb], bbox_to_anchor=(1, 1))
-titlestring = '.'.join([daqfile[len(daqfile):-8],"Pressure in System" ,"png"])
-plotandsave(titlestring,"pressure/V", "Time/S",-8)
+daqfiles = loadfilesmatching("daq.csv")
+for daqfile in daqfiles:
+    daqdata = pd.read_csv(daqfile, header=daqheaderrow)
+    datavalues = [list(x) for x in zip(*daqdata.values)]
+    datalabels = daqdata.columns
+    print(datalabels)
+    x = range(len(datavalues[0]))
+    for each in daqYcolumns:
+        y = datavalues[each]
+        plt.plot(x, y, color =colours[each], linewidth = 1.5, alpha = 0.7)
+    plt.legend(datalabels[daqYcolumnsb], bbox_to_anchor=(1, 1))
+    titlestring = '.'.join([daqfile[-13:-8],"Pressure in System" ,"png"])
+    plotandsave(titlestring,"pressure/V", "Time/S",-8)
 
 ###diode
-diodefile = loadfirstfilematching("diode.csv")
-diodedata = pd.read_csv(diodefile, sep='\t', header=diodeheaderrow)
-datavalues = [list(x) for x in zip(*diodedata.values)]
-datalabels = diodedata.columns
-print(datalabels)
-x =  datavalues[diodeXcolumn]
-y = pd.Series(datavalues[diodeYcolumn]).rolling(window=smoothfactor).mean()
-plt.plot(x, y, color =colours[5], linewidth = 1.5, alpha = 0.7)
-plt.legend(datalabels[diodeYcolumns], bbox_to_anchor=(1, 1))
-titlestring = '.'.join([diodefile[len(filepath):-10],"light output to diode" ,"png"])
-plotandsave(titlestring,"power/W","Time/MS",0)
+diodefiles = loadfilesmatching("diode.csv")
+for diodefile in diodefiles:
+    diodedata = pd.read_csv(diodefile, sep='\t', header=diodeheaderrow)
+    datavalues = [list(x) for x in zip(*diodedata.values)]
+    datalabels = diodedata.columns
+    print(datalabels)
+    x =  datavalues[diodeXcolumn]
+    y = pd.Series(datavalues[diodeYcolumn]).rolling(window=smoothfactor).mean()
+    plt.plot(x, y, color =colours[5], linewidth = 1.5, alpha = 0.7)
+    plt.legend(datalabels[diodeYcolumn], bbox_to_anchor=(1, 1))
+    titlestring = '.'.join([diodefile[-15:-10],"light output to diode" ,"png"])
+    plotandsave(titlestring,"power/W","Time/MS",0)
 
 
 
 ###r1 and r2
-r1file = loadfirstfilematching("R2.csv")
-r1data = pd.read_csv(r1file, header=rheaderrow)
-datavalues = [list(x) for x in zip(*r1data.values)]
-r2 = datavalues[rYcolumn]
-r1file = loadfirstfilematching("R1.csv")
-r1data = pd.read_csv(r1file, header=rheaderrow) #using r1file for both, to conserve space in the ram lmaooo
-datavaluesii = [list(x) for x in zip(*r1data.values)]
-r1 = datavaluesii[rYcolumn]
-if len(r1)>len(r2):  # discards values from longer file so that r1 and r2 are the same length
-    r1 = r1[:len(r2)]
-else:
-    r2 = r2[:len(r1)]
-x = range(len(r1)) #makes a column of integers, counting from 1 up to the end of the file
-r1overr2=[]
-current=[]
-currentr2=[]
-for each in x:
-    r1overr2.append((r1[each]/r2[each]))
-    current.append((r1[each]/resistorohms))
-    currentr2.append((r2[each]/resistorohms))
-plt.plot(x, r1, color =colours[5], linewidth = 1.5, alpha = 0.7)
-plt.plot(x, r2, color =colours[6], linewidth = 1.5, alpha = 0.7)
-titlestring = '.'.join([r1file[len(filepath):-7],"R1 vs R2","png"])
-plotandsave(titlestring,"power/W", "Time/MS",False)
-plt.plot(r1overr2, r1, color =colours[7], linewidth = 1.5, alpha = 0.7)
-titlestring = '.'.join([r1file[len(filepath):-7],"R1 ÷ R2 vs R1","png"])
-plotandsave(titlestring,"R1/R2", "R1",False)
-plt.plot(x, current, color =colours[8], linewidth = 1.5, alpha = 0.7)
-plt.legend(datalabels[diodeYcolumn], bbox_to_anchor=(1, 1))
-titlestring = '.'.join([r1file[len(filepath):-4],"R2 Current","png"])
-plotandsave(titlestring,"power/W", "Time/MS",False)
-         
+r2files = loadfilesmatching("R2.csv")
+r1files = loadfilesmatching("R1.csv")
+for each in range(len(r1files)):
+    r1data = pd.read_csv(r1files[each], header=rheaderrow)
+    datavalues = [list(x) for x in zip(*r1data.values)]
+    r1 = datavalues[rYcolumn]
+    r2data = pd.read_csv(r2files[each], header=rheaderrow) #using r1file for both, to conserve space in the ram lmaooo
+    datavaluesii = [list(x) for x in zip(*r2data.values)]
+    r2 = datavaluesii[rYcolumn]
+    if len(r1)>len(r2):  # discards values from longer file so that r1 and r2 are the same length
+        r1 = r1[:len(r2)]
+    else:
+        r2 = r2[:len(r1)]
+    x = range(len(r1)) #makes a column of integers, counting from 1 up to the end of the file
+    r1overr2=[]
+    current=[]
+    currentr2=[]
+    for each in x:
+        r1overr2.append((r1[each]/r2[each]))
+        current.append((r1[each]/resistorohms))
+        currentr2.append((r2[each]/resistorohms))
+    plt.plot(x, r1, color =colours[5], linewidth = 1.5, alpha = 0.7)
+    plt.plot(x, r2, color =colours[6], linewidth = 1.5, alpha = 0.7)
+    titlestring = '.'.join([r1file[-12:-7],"R1 vs R2","png"])
+    plotandsave(titlestring,"power/W", "Time/MS",False)
+    plt.plot(r1overr2, r1, color =colours[7], linewidth = 1.5, alpha = 0.7)
+    titlestring = '.'.join([r1file[-12:-7],"R1 ÷ R2 vs R1","png"])
+    plotandsave(titlestring,"R1/R2", "R1",False)
+    plt.plot(x, current, color =colours[8], linewidth = 1.5, alpha = 0.7)
+    titlestring = '.'.join([r1file[-9:-4],"R2 Current","png"])
+    plotandsave(titlestring,"power/W", "Time/MS",False)
+
         
         
 def findlowerboundofcurve(enumerateddata):
