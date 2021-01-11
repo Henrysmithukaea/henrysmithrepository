@@ -122,7 +122,10 @@ for each in range(len(r1files)):
     current=[]
     currentr2=[]
     for each in x:
-        r1overr2.append((r1[each]/r2[each]))
+        if r2[each] == 0:
+            r1overr2.append(0)
+        else:
+            r1overr2.append((r1[each]/r2[each]))
         current.append((r1[each]/resistorohms))
         currentr2.append((r2[each]/resistorohms))
     plt.plot(x, r1, color =colours[5], linewidth = 1.5, alpha = 0.7)
