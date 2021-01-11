@@ -49,7 +49,7 @@ def plotandsave(titlestring,ystring,xstring,yv): # shows a plot and then saves i
 def loadfilesmatching(name): # loads files and returns a list of them ordered by name alphabetically
     filefind = ''.join([filepath, name])
     files = sorted(glob.glob(filefind,recursive=True))
-    print ('Began reading', files)
+    print ('Began reading', files, len(files))
     return files
     
     
