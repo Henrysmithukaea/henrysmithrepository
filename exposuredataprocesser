@@ -100,7 +100,8 @@ for diodefile in diodefiles:
 ###r1 and r2
 r2files = loadfilesmatching("R2.csv")
 r1files = loadfilesmatching("R1.csv")# DOES NOT CHECK THE FILES MATCH.
-listoffiles =[]
+listoffilesr1 =[]
+listoffilesr2=[]
 for each in range(len(r1files)):
     r1data = pd.read_csv(r1files[each], header=rheaderrow)
     datavalues = [list(x) for x in zip(*r1data.values)]
