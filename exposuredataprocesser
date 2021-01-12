@@ -177,20 +177,25 @@ print ('"My work here is done." The python removes its sunglasses, revealing a p
 
 
 
-
-
-canvname = 'report thing.pdf'
-canv = Canvas(canvname,pagesize=A4)
 img = ImageReader('N:\CCFE\H3AT\TritiumScience\Tritium Research\Tricem\Data\Science\Analysis\Macros\FinalLogo.jpg')
 registerFont(TTFont('arial','C:\\windows\\fonts\\arial.ttf'))
-
 cwidt = 590
-cheig = 840
-
-canv.drawImage(img,cwidt/2,785,290,55,anchor='sw',anchorAtXY=True,showBoundary=False)
-
-canv.setFont('arial',14)
-canv.setFillColor((1,0,0)) #change the text color
-canv.drawCentredString(x+w*0.5,y+h*0.5,'On Top')
-canv.save()
+cheig = 785
+for each in listoffilesr1
+    listoffilesr1[each] = file
+    filepath = ''.join([outputfolder, file, '*'])
+    canvname = ''.join([file,' report.pdf']          
+    canv = Canvas(canvname,pagesize=A4)
+    listoffiles = sorted(glob.glob(filefind,recursive=True))
+    print (listoffiles)
+    canv.drawImage(listoffiles[0],10,2cheigh/3,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
+    canv.drawImage(listoffiles[1],cwidt/2,2cheigh/3,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
+    canv.drawImage(listoffiles[2],10,(cheigh+15)/3,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
+    canv.drawImage(listoffiles[3],cwidt/2,(cheigh+15)/3,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
+    canv.drawImage(listoffiles[4],10,10,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
+    canv.drawImage(listoffiles[3],cwidt/2,10,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
+    canv.setFont('arial',14)
+    canv.setFillColor((1,0,0)) #change the text color
+    canv.drawCentredString(x+w*0.5,y+h*0.5,'On Top')
+    canv.save()
 print ('done')
