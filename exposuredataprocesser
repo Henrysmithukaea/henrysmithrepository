@@ -1,3 +1,8 @@
+from reportlab.lib.utils import ImageReader
+from reportlab.pdfgen.canvas import Canvas
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase.pdfmetrics import registerFont
+from reportlab.lib.pagesizes import A4
 
 # henry.smith@ukaea.uk
 
@@ -8,12 +13,13 @@ from matplotlib.lines import Line2D
 import matplotlib.axes as axes
 import matplotlib.patches as patches
 import glob
-from pathlib import Path
+
 
 #defines
-filepath = 'N:/CCFE/H3AT/TritiumScience/Tritium Research/Tricem/Data/Science/ScienceRun3-D2/**\*' #write the filepath, and at the end, include '*' - can't end in a \.
- n                                                                                                #writing ** means it searches through all subfolders in the given directory.
-smoothfactor =3
+filefolder = 'N:/CCFE/H3AT/TritiumScience/Tritium Research/Tricem/Data/Science/ScienceRun3-D2/' #write the filepath, and at the end, include '*' so the code works.
+                                                                                                  # ** is a "wildcard", so it goes through every folder in thesciencerun3-d2 directory 
+outputfolder = 'N:/CCFE/H3AT/TritiumScience/Tritium Research/Tricem/Data/Science/ScienceRun3-D2/'
+smoothfactor =3 # smoothing factor for any averaging we do on the graph (there's none atm)
 
 daqXcolumn = 0 			#UNUSED. seems we increments seconds by 1s each timestep, so range() will work
 daqYcolumns = [2,3,4,5] 	#all columns in each sheet of the doc that contain Y data
@@ -33,6 +39,8 @@ colours = ("Yellow", "Green", "Blue", "Red", "Orange", "Purple", "Black", "Teal"
            "rosybrown", "salmon", "darkgoldenrod", "lightseagreen", "darkolivegreen", "saddlebrown", "cornflowerblue",
           "fuchsia", "grey", "darkslategray", "navy", "royalblue", "lightgreen", "mediumseagreen") #will cycle through this index colouring each new graph in a new colour
 
+#derived defines
+filepath = ''.join([filefolder,'**\*'])
 
 
 #Command defines
@@ -44,13 +52,15 @@ def plotandsave(titlestring,ystring,xstring,yv): # shows a plot and then saves i
     plt.ylabel(ystring) 			#defines labels for your graph. "D flux (N m⁻²s⁻ˡ)"
     plt.xlabel(xstring) 
     plt.rcParams.update({"savefig.facecolor":  ('white'),"figure.figsize": (14, 10)})  			#big nice pngs
-    plt.savefig(titlestring, bbox_inches='tight') #this will throw a bunch of .png files into the folder specified in filepath, overwriting anything with the same name.
+    savestring = '/'.join([outputfolder, titlestring])
+    plt.savefig(savestring, bbox_inches='tight') #this will throw a bunch of .png files into the folder specified in filepath, overwriting anything with the same name.
     plt.show()				#shows you the graph that was saved
 
 def loadfilesmatching(name): # loads files and returns a list of them ordered by name alphabetically
     filefind = ''.join([filepath, name])
     files = sorted(glob.glob(filefind,recursive=True))
     print ('Began reading', files, len(files))
+    print(filefind)
     return files
     
     
@@ -68,7 +78,7 @@ for daqfile in daqfiles:
         y = datavalues[each]
         plt.plot(x, y, color =colours[each], linewidth = 1.5, alpha = 0.7)
     plt.legend(datalabels[daqYcolumnsb], bbox_to_anchor=(1, 1))
-    titlestring = '.'.join([daqfile[-13:-8],"Pressure in System" ,"png"])
+    titlestring = '.'.join([daqfile[len(filefolder):-8],"Pressure in System" ,"png"])
     plotandsave(titlestring,"pressure/V", "Time/S",-8)
 
 ###diode
@@ -82,7 +92,7 @@ for diodefile in diodefiles:
     y = pd.Series(datavalues[diodeYcolumn]).rolling(window=smoothfactor).mean()
     plt.plot(x, y, color =colours[5], linewidth = 1.5, alpha = 0.7)
     plt.legend(datalabels[diodeYcolumn], bbox_to_anchor=(1, 1))
-    titlestring = '.'.join([diodefile[-15:-10],"light output to diode" ,"png"])
+    titlestring = '.'.join([diodefile[len(filefolder):-10],"light output to diode" ,"png"])
     plotandsave(titlestring,"power/W","Time/MS",0)
 
 
@@ -90,6 +100,7 @@ for diodefile in diodefiles:
 ###r1 and r2
 r2files = loadfilesmatching("R2.csv")
 r1files = loadfilesmatching("R1.csv")# DOES NOT CHECK THE FILES MATCH.
+listoffiles =[]
 for each in range(len(r1files)):
     r1data = pd.read_csv(r1files[each], header=rheaderrow)
     datavalues = [list(x) for x in zip(*r1data.values)]
@@ -114,14 +125,19 @@ for each in range(len(r1files)):
         currentr2.append((r2[each]/resistorohms))
     plt.plot(x, r1, color =colours[5], linewidth = 1.5, alpha = 0.7)
     plt.plot(x, r2, color =colours[6], linewidth = 1.5, alpha = 0.7)
-    titlestring = '.'.join([r1file[-12:-7],"R1 vs R2","png"])
+    listoffilesr1.append(r1file[len(filefolder):len(filefolder)+5])
+    listoffilesr2.append(r2file[len(filefolder):len(filefolder)+5])
+    titlestring = '.'.join([listoffilesr1[each],"R1 vs R2","png"])
     plotandsave(titlestring,"power/W", "Time/MS",False)
     plt.plot(r1overr2, r1, color =colours[7], linewidth = 1.5, alpha = 0.7)
-    titlestring = '.'.join([r1file[-12:-7],"R1 ÷ R2 vs R1","png"])
+    titlestring = '.'.join([listoffilesr1[each],"R1 ÷ R2 vs R1","png"])
     plotandsave(titlestring,"R1/R2", "R1",False)
     plt.plot(x, current, color =colours[8], linewidth = 1.5, alpha = 0.7)
-    titlestring = '.'.join([r1file[-9:-4],"R2 Current","png"])
+    titlestring = '.'.join([listoffilesr1[each],"R2 Current","png"])
     plotandsave(titlestring,"power/W", "Time/MS",False)
+if not listoffilesr1==listoffilesr2:
+    print ('the files used for r1 and r2 do not seem to match', listoffilesr1, listoffilesr2)
+    
 
         
 # Unused defines
@@ -156,3 +172,24 @@ def findupperboundofcurve(enumerateddata, lowerstart):
                 previous = each
         
 print ('"My work here is done." The python removes its sunglasses, revealing a pair of slightly smaller sunglasses, and exits the room.')
+
+
+
+
+
+
+canvname = 'report thing.pdf'
+canv = Canvas(canvname,pagesize=A4)
+img = ImageReader('N:\CCFE\H3AT\TritiumScience\Tritium Research\Tricem\Data\Science\Analysis\Macros\FinalLogo.jpg')
+registerFont(TTFont('arial','C:\\windows\\fonts\\arial.ttf'))
+
+cwidt = 590
+cheig = 840
+
+canv.drawImage(img,cwidt/2,785,290,55,anchor='sw',anchorAtXY=True,showBoundary=False)
+
+canv.setFont('arial',14)
+canv.setFillColor((1,0,0)) #change the text color
+canv.drawCentredString(x+w*0.5,y+h*0.5,'On Top')
+canv.save()
+print ('done')
