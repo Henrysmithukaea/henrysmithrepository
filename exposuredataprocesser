@@ -49,7 +49,7 @@ cwidt = 590
 cheigh = 785
 
 #derived defines. change ** to a named folder in filepath e.g s87
-filepath = ''.join([filefolder,'s87\*'])
+filepath = ''.join([filefolder,'**\*'])
 
 
 #Command defines
@@ -57,10 +57,14 @@ filepath = ''.join([filefolder,'s87\*'])
 def dopdf(canv, listoffiles):
     canv.drawImage(listoffiles[0],10,2*cheigh/3,280,200,anchor='sw',anchorAtXY=True,showBoundary=False)
     canv.drawImage(listoffiles[1],cwidt/2,2*cheigh/3,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
-    canv.drawImage(listoffiles[2],10,(cheigh+15)/3,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
-    canv.drawImage(listoffiles[3],cwidt/2,(cheigh+15)/3,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
-    canv.drawImage(listoffiles[4],10,10,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
-    canv.drawImage(listoffiles[3],cwidt/2,10,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
+    if len(listoffiles>=3:
+        canv.drawImage(listoffiles[2],10,(cheigh+15)/3,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
+        if len(listoffiles>=4:
+            canv.drawImage(listoffiles[3],cwidt/2,(cheigh+15)/3,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
+            if len(listoffiles>=5:
+                canv.drawImage(listoffiles[4],10,10,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
+                if len(listoffiles>=6:
+                    canv.drawImage(listoffiles[5],cwidt/2,10,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
     canv.setFont('arial',14)
     canv.setFillColor((0,0,0)) #change the text color
     canv.drawCentredString(cwidt/2,(2*cheigh/3) +250, 'file 1 name')
