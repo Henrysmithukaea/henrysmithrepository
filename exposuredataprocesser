@@ -43,7 +43,7 @@ diodeheaderrow = 0 				#row of the header (i.e the column titles)
 
 ### defines for r comparison
 rXcolumn =0 #UNUSED. seems we increments seconds by 1s each timestep, so range() will work and will be faster.7
-rtimestep =1
+rtimestep =0.125 #timestep in seconds (this isn't correct)
 rYcolumn =1
 rheaderrow = 0
 resistorohms =1
@@ -149,13 +149,13 @@ for each in range(len(r1files)):
         r1 = r1[:len(r2)]
     else:
         r2 = r2[:len(r1)]
-    x = range(len(r1))
-    xfloat = [i*rtimestep for i in x] #makes a column, counting from 1 up to the end of the file. Then multiplies all values by a float(set to 1)
+    xlong = range(len(r1))
+    x = [i*rtimestep for i in x] #makes a column, counting from 1 up to the end of the file. Then multiplies all values by a float(set to 1)
     r1overr2=[]
     current=[]
     currentr2=[]
     currenthigh=[]
-    for eachh in x:
+    for eachh in xrange:
         if r2[eachh] == 0:
             r1overr2.append(0) # if it can't actually divide by r2, adds 0 instead.
         else:
@@ -171,7 +171,7 @@ for each in range(len(r1files)):
     listoffilesr1.append(r1file[:6])
     listoffilesr2.append(r2file[:6])
     titlestring = '.'.join([listoffilesr1[each],"R1 vs R2","png"])
-    plotandsave(titlestring,"power/W", "Time/MS",False)
+    plotandsave(titlestring,"power/W", "Time/S",False)
     plt.plot(r1overr2, r1, color =colours[7], linewidth = 1.5, alpha = 0.7)
     titlestring = '.'.join([listoffilesr1[each],"R1 ÷ R2 vs R1","png"])
     plotandsave(titlestring,"R1/R2", "R1",False)
@@ -189,7 +189,7 @@ for each in range(len(listoffilesr1)):
     canv = Canvas(canvname,pagesize=A4)
     canv.drawImage(img, 240, cheigh, 240, 55,anchor='sw',anchorAtXY=True,showBoundary=False)
     listoffiles = sorted(glob.glob(filepath,recursive=True))
-    seconds = timelist[each]/1000
+    seconds = timelist[each]
     minutes, seconds = divmod(seconds, 60)
     hours, minutes = divmod(minutes, 60)
     
