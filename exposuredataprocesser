@@ -25,8 +25,13 @@ colours = ("Yellow", "Green", "Blue", "Red", "Orange", "lightgreen", "navy", "Te
            "purple", "salmon", "darkgoldenrod", "lightseagreen", "darkolivegreen", "saddlebrown", "cornflowerblue",
           "fuchsia", "grey", "darkslategray", "black", "royalblue", "rosybrown", "mediumseagreen") #will cycle through this index colouring each new graph in a new colour
 
+
+areacm2 = 12.82
+
+
 ### defines for daq
 daqXcolumn = 0 			#UNUSED. seems we increments seconds by 1s each timestep, so range() will work
+daqtimestep =1
 daqYcolumns = [2,3,4,5] 	#all columns in each sheet of the doc that contain Y data
 daqYcolumnsb = [2,3,4,5] #the header can sometimes be misaligned because pandas automatically throws away row 1 if there are more columns than headers
 daqheaderrow = 7 				#row of the header (i.e the column titles)
@@ -37,10 +42,11 @@ diodeYcolumn = 1 # columnthat contains Y data
 diodeheaderrow = 0 				#row of the header (i.e the column titles)
 
 ### defines for r comparison
-rXcolumn =0 #UNUSED. seems we increments seconds by 1s each timestep, so range() will work and will be faster.
+rXcolumn =0 #UNUSED. seems we increments seconds by 1s each timestep, so range() will work and will be faster.7
+rtimestep =1
 rYcolumn =1
 rheaderrow = 0
-resistorohms =1234
+resistorohms =1
 
 ### defines for pdf processor. p.s check derived defines for this
 registerFont(TTFont('arial','C:\\windows\\fonts\\arial.ttf'))
@@ -49,25 +55,25 @@ cwidt = 590
 cheigh = 785
 
 #derived defines. change ** to a named folder in filepath e.g s87
-filepath = ''.join([filefolder,'**\*'])
+filepath = ''.join([filefolder,'S87\*'])
 
 
 #Command defines
 
-def dopdf(canv, listoffiles):
+def dopdf(canv, listoffiles, assembledstring):
     canv.drawImage(listoffiles[0],10,2*cheigh/3,280,200,anchor='sw',anchorAtXY=True,showBoundary=False)
     canv.drawImage(listoffiles[1],cwidt/2,2*cheigh/3,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
-    if len(listoffiles>=3:
+    if len(listoffiles)>=3:
         canv.drawImage(listoffiles[2],10,(cheigh+15)/3,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
-        if len(listoffiles>=4:
+        if len(listoffiles)>=4:
             canv.drawImage(listoffiles[3],cwidt/2,(cheigh+15)/3,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
-            if len(listoffiles>=5:
+            if len(listoffiles)>=5:
                 canv.drawImage(listoffiles[4],10,10,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
-                if len(listoffiles>=6:
+                if len(listoffiles)>=6:
                     canv.drawImage(listoffiles[5],cwidt/2,10,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
     canv.setFont('arial',14)
     canv.setFillColor((0,0,0)) #change the text color
-    canv.drawCentredString(cwidt/2,(2*cheigh/3) +250, 'file 1 name')
+    canv.drawCentredString(cwidt/2,(2*cheigh/3) +250, assembledstring)
     canv.save()
 
 def plotandsave(titlestring,ystring,xstring,yv): # shows a plot and then saves it as a .png
@@ -97,7 +103,7 @@ for daqfile in daqfiles:
     datavalues = [list(x) for x in zip(*daqdata.values)]
     datalabels = daqdata.columns
     print(datalabels)
-    x = range(len(datavalues[0]))
+    x = [i*daqtimestep for i in range(len(datavalues[0]))]
     for each in daqYcolumns:
         y = datavalues[each]
         plt.plot(x, y, color =colours[each], linewidth = 1.5, alpha = 0.7)
@@ -113,7 +119,7 @@ for diodefile in diodefiles:
     datavalues = [list(x) for x in zip(*diodedata.values)]
     datalabels = diodedata.columns
     print(datalabels)
-    x =  datavalues[diodeXcolumn]
+    x = datavalues[diodeXcolumn]
     y = pd.Series(datavalues[diodeYcolumn]).rolling(window=smoothfactor).mean()
     plt.plot(x, y, color =colours[0], linewidth = 1.5, alpha = 0.7)
     plt.legend(datalabels[diodeYcolumn], bbox_to_anchor=(1, 1))
@@ -128,6 +134,8 @@ r2files = loadfilesmatching("R2.csv")
 r1files = loadfilesmatching("R1.csv")# DOES NOT CHECK THE FILES MATCH.
 listoffilesr1 =[]
 listoffilesr2=[]
+meancurrentlist=[]
+timelist =[]
 for each in range(len(r1files)):
     r1file = os.path.basename(r1files[each])
     r2file = os.path.basename(r2files[each])
@@ -141,17 +149,23 @@ for each in range(len(r1files)):
         r1 = r1[:len(r2)]
     else:
         r2 = r2[:len(r1)]
-    x = range(len(r1)) #makes a column of integers, counting from 1 up to the end of the file
+    x = range(len(r1))
+    xfloat = [i*rtimestep for i in x] #makes a column, counting from 1 up to the end of the file. Then multiplies all values by a float(set to 1)
     r1overr2=[]
     current=[]
     currentr2=[]
+    currenthigh=[]
     for eachh in x:
         if r2[eachh] == 0:
-            r1overr2.append(0) # checking it can actually divide by r2
+            r1overr2.append(0) # if it can't actually divide by r2, adds 0 instead.
         else:
-            r1overr2.append((r1[eachh]/r2[eachh]))
-        current.append((r1[eachh]/resistorohms))
-        currentr2.append((r2[eachh]/resistorohms))
+            r1overr2.append(r1[eachh]/r2[eachh])
+        current.append(r1[eachh]/resistorohms)
+        currentr2.append(r2[eachh]/resistorohms)
+        if r1[eachh]>=0.0001:
+            currenthigh.append(r1[eachh]/resistorohms) 
+    timelist.append(len(currenthigh)*rtimestep)
+    meancurrentlist.append(sum(currenthigh)/len(currenthigh))
     plt.plot(x, r1, color =colours[1], linewidth = 1.5, alpha = 0.7)
     plt.plot(x, r2, color =colours[2], linewidth = 1.5, alpha = 0.7)
     listoffilesr1.append(r1file[:6])
@@ -168,14 +182,21 @@ print (listoffilesr1)
 if not listoffilesr1==listoffilesr2:
     print ('the files used for r1 and r2 do not seem to match', listoffilesr1, listoffilesr2)
 
-for file in listoffilesr1:
+for each in range(len(listoffilesr1)):
+    file = listoffilesr1[each]
     filepath = ''.join([outputfolder, '/', file, '*' ])
     canvname = ''.join([outputfolder, '/!', file, ' report.pdf'])
     canv = Canvas(canvname,pagesize=A4)
     canv.drawImage(img, 240, cheigh, 240, 55,anchor='sw',anchorAtXY=True,showBoundary=False)
     listoffiles = sorted(glob.glob(filepath,recursive=True))
-    print (filepath, listoffiles)
-    dopdf(canv, listoffiles)
+    seconds = timelist[each]/1000
+    minutes, seconds = divmod(seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    
+    stringlist = ['The mean current is', str(meancurrentlist[each]), 'Time(s) is', str(hours),'Hr',str(minutes),'min',str(seconds),'s']
+    assembledstring = ' '.join(stringlist)
+    print (filepath, listoffiles, assembledstring)
+    dopdf(canv, listoffiles, assembledstring)
 print ('"My work here is done." The python removes its sunglasses, revealing a pair of slightly smaller sunglasses, and exits the room.')
 
                        
