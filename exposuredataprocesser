@@ -21,9 +21,9 @@ filefolder = 'N:/CCFE/H3AT/TritiumScience/Tritium Research/Tricem/Data/Science/S
 outputfolder = 'N:\CCFE\H3AT\TritiumScience\Tritium Research\Tricem\Data\Science\ScienceRun3-D2\output'
 smoothfactor =3 # smoothing factor for any averaging we do on the graph (there's none atm)
 
-colours = ("Yellow", "Green", "Blue", "Red", "Orange", "Purple", "Black", "Teal",
-           "rosybrown", "salmon", "darkgoldenrod", "lightseagreen", "darkolivegreen", "saddlebrown", "cornflowerblue",
-          "fuchsia", "grey", "darkslategray", "navy", "royalblue", "lightgreen", "mediumseagreen") #will cycle through this index colouring each new graph in a new colour
+colours = ("Yellow", "Green", "Blue", "Red", "Orange", "lightgreen", "navy", "Teal",
+           "purple", "salmon", "darkgoldenrod", "lightseagreen", "darkolivegreen", "saddlebrown", "cornflowerblue",
+          "fuchsia", "grey", "darkslategray", "black", "royalblue", "rosybrown", "mediumseagreen") #will cycle through this index colouring each new graph in a new colour
 
 ### defines for daq
 daqXcolumn = 0 			#UNUSED. seems we increments seconds by 1s each timestep, so range() will work
@@ -49,21 +49,21 @@ cwidt = 590
 cheigh = 785
 
 #derived defines. change ** to a named folder in filepath e.g s87
-filepath = ''.join([filefolder,'**\*'])
+filepath = ''.join([filefolder,'s87\*'])
 
 
 #Command defines
 
 def dopdf(canv, listoffiles):
-    canv.drawImage(listoffiles[0],10,2*cheigh/3,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
+    canv.drawImage(listoffiles[0],10,2*cheigh/3,280,200,anchor='sw',anchorAtXY=True,showBoundary=False)
     canv.drawImage(listoffiles[1],cwidt/2,2*cheigh/3,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
     canv.drawImage(listoffiles[2],10,(cheigh+15)/3,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
     canv.drawImage(listoffiles[3],cwidt/2,(cheigh+15)/3,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
     canv.drawImage(listoffiles[4],10,10,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
     canv.drawImage(listoffiles[3],cwidt/2,10,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
     canv.setFont('arial',14)
-    canv.setFillColor((1,0,0)) #change the text color
-    canv.drawCentredString(10,(2*cheigh/3) +200, 'file 1 name')
+    canv.setFillColor((0,0,0)) #change the text color
+    canv.drawCentredString(cwidt/2,(2*cheigh/3) +250, 'file 1 name')
     canv.save()
 
 def plotandsave(titlestring,ystring,xstring,yv): # shows a plot and then saves it as a .png
@@ -111,7 +111,7 @@ for diodefile in diodefiles:
     print(datalabels)
     x =  datavalues[diodeXcolumn]
     y = pd.Series(datavalues[diodeYcolumn]).rolling(window=smoothfactor).mean()
-    plt.plot(x, y, color =colours[5], linewidth = 1.5, alpha = 0.7)
+    plt.plot(x, y, color =colours[0], linewidth = 1.5, alpha = 0.7)
     plt.legend(datalabels[diodeYcolumn], bbox_to_anchor=(1, 1))
     titlefile =  os.path.basename(diodefile)
     titlestring = '.'.join([titlefile[:6],"light output to diode" ,"png"])
@@ -148,8 +148,8 @@ for each in range(len(r1files)):
             r1overr2.append((r1[eachh]/r2[eachh]))
         current.append((r1[eachh]/resistorohms))
         currentr2.append((r2[eachh]/resistorohms))
-    plt.plot(x, r1, color =colours[5], linewidth = 1.5, alpha = 0.7)
-    plt.plot(x, r2, color =colours[6], linewidth = 1.5, alpha = 0.7)
+    plt.plot(x, r1, color =colours[1], linewidth = 1.5, alpha = 0.7)
+    plt.plot(x, r2, color =colours[2], linewidth = 1.5, alpha = 0.7)
     listoffilesr1.append(r1file[:6])
     listoffilesr2.append(r2file[:6])
     titlestring = '.'.join([listoffilesr1[each],"R1 vs R2","png"])
@@ -157,7 +157,7 @@ for each in range(len(r1files)):
     plt.plot(r1overr2, r1, color =colours[7], linewidth = 1.5, alpha = 0.7)
     titlestring = '.'.join([listoffilesr1[each],"R1 ÷ R2 vs R1","png"])
     plotandsave(titlestring,"R1/R2", "R1",False)
-    plt.plot(x, current, color =colours[8], linewidth = 1.5, alpha = 0.7)
+    plt.plot(x, current, color =colours[6], linewidth = 1.5, alpha = 0.7)
     titlestring = '.'.join([listoffilesr1[each],"R2 Current","png"])
     plotandsave(titlestring,"power/W", "Time/MS",False)
 print (listoffilesr1)
