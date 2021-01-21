@@ -1,3 +1,4 @@
+
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen.canvas import Canvas
 from reportlab.pdfbase.ttfonts import TTFont
@@ -42,11 +43,12 @@ diodeYcolumn = 1 # columnthat contains Y data
 diodeheaderrow = 0 				#row of the header (i.e the column titles)
 
 ### defines for r comparison
-rXcolumn =0 #UNUSED. seems we increments seconds by 1s each timestep, so range() will work and will be faster.7
-rtimestep =0.125 #timestep in seconds (this isn't correct)
+rXcolumn =0 #now used for interpolation
 rYcolumn =1
 rheaderrow = 0
 resistorohms =1
+searchrange = 200 # range of data that r interpolation will search. Set to about 2000000 to search from the start each time
+
 
 ### defines for pdf processor. p.s check derived defines for this
 registerFont(TTFont('arial','C:\\windows\\fonts\\arial.ttf'))
@@ -66,18 +68,12 @@ def formattoseconds(x):
     if dots != [2,5,8]:
         print(dots, 'should be 2,5,8. Returned [0]')
         return [0]
-    a= x[0]
-    xosecs = int(a[6:8]) + (3600*int(a[0:2])) + (60*int(a[3:5])) + (0.001 *int(a[9:]))
     for i in x:
-        hrs = int(i[0:2])
-        mins = int(i[3:5]) 
-        ms = int(i[9:]) 
-        seconds = int(i[6:8]) 
-        secs = (seconds +0.001*ms + 60*mins + 3600*hrs)-xosecs
-        list=list+[secs]
+        list.append(int(i[6:8]) + (3600*int(i[0:2])) + (60*int(i[3:5])) + (0.001 *int(i[9:])))
+    print ('sorted x data from hh/mm/ss/ms into seconds')
     return sorted(list)
 
-def interpolate(r1x,r1y,r2x,r2y, searchrange):
+def interpolate(r1x,r1y,r2x,r2y,searchrange):
     r1yo = r1y[0:]
     r2yo = r2y[0:]
     if r1x[0]< r2x[0]:
@@ -85,22 +81,23 @@ def interpolate(r1x,r1y,r2x,r2y, searchrange):
         for i in range(len(r1x)): # find the first number larger than r2x[1]  in the series r1x[]. Then, save its position in r1x[] to 'r1xstart'
             if r1x[i]>=r2x[0]:
                 r1xstart = i
-                print(i, 'r1xstart')
+                print(r1xstart, r1x[i], '= r1xstart. 0= r2xstart')
                 break
     else:
         r1xstart =0
         for i in range(len(r2x)): # find the first number larger than r2x[1]  in the series r1x[]. Then, save its position in r1x[] to 'r1xstart'
             if r2x[i]>=r1x[0]:
                 r2xstart = i
-                print(r2xstart, r2x[i], 'r2xstart. this parts working yo')
+                print(r2xstart, r2x[i], '= r2xstart. 0= r1xstart ')
                 break
 
 
     if r1x[-1]>r2x[-1]: # if las value of r1x is biggest, take r2x up to its end 
         r2xend = len(r2x)
         r2xendoff= None
+        maxrzx = max(r2x)
         for i in range(len(r1x)):
-            if r1x[-(i+1)]<=max(r2x):
+            if r1x[-(i+1)]<=maxrzx:
                 r1xend = len(r1x)-i
                 r1xendoff = -i
                 print(r1xend, r1xendoff, 'r1xend')
@@ -108,34 +105,47 @@ def interpolate(r1x,r1y,r2x,r2y, searchrange):
     else: # if las value of r2x is biggest, take r1x up to its end 
         r1xend = len(r1x)
         r1xendoff = None
+        maxrix = max(r1x)
         for i in range(len(r2x)):
-            if r2x[-(i+1)]<=max(r1x):
+            if r2x[-(i+1)]<=maxrix:
                 r2xend = len(r2x)-i
                 r2xendoff =-i
                 print(r2xend, 'r1xend')
                 break
-
-
+    lenrix =len(r1x)
+    errorhandler =[]
     for i in range(r2xstart, r2xend):
         startrange = i-searchrange
         if startrange <0:
             startrange =0
-        for j in range(len(r1x)): # for j in a search range 
+        for j in range(startrange, lenrix): # for j in a search range 
             if r1x[j] >=r2x[i]: # finds the first value greater than r2x[i]
-                r1yo.insert(   (-(len(r1x)-j) ),  r1y[(j-1)] + (   ( (r1y[j]-r1y[(j-1)])/(r1x[j]-r1x[(j-1)]) ) * (r2x[i]-r1x[(j-1)])    ) ) #adds interpolated value for r2x[i] to the list of y values
+                r1yo.insert(   (-(lenrix-j) ),  r1y[(j-1)] + (   ( (r1y[j]-r1y[(j-1)])/(r1x[j]-r1x[(j-1)]) ) * (r2x[i]-r1x[(j-1)])    ) ) #adds interpolated value for r2x[i] to the list of y values
+                if j==startrange:
+                    errorhandler.append(r2x[i])
                 break
+    print ('finished interpolating r1y by r2x')
+    lenrzx= len(r2x)
     for i in range(r1xstart, r1xend):
         startrange = i-searchrange
         if startrange <0:
             startrange =0
-        for j in range(len(r2x)): # for j in r1x from offset minus search range onwards
+        for j in range(startrange, lenrzx): # for j in r1x from offset minus search range onwards
             if r2x[j] >=r1x[i]: # finds first value greater than r1xi
-                r2yo.insert(-(len(r2x)-j) ,  r2y[(j-1)] + (   ( (r2y[j]-r2y[(j-1)])/(r2x[j]-r2x[(j-1)]) ) * (r1x[i]-r2x[(j-1)])    ) ) #adds interpolated value to the list
+                r2yo.insert(-(lenrzx-j) ,  r2y[(j-1)] + (   ( (r2y[j]-r2y[(j-1)])/(r2x[j]-r2x[(j-1)]) ) * (r1x[i]-r2x[(j-1)])    ) ) #adds interpolated value to the list
+                if j==startrange:
+                    errorhandler.append(r2x[i])
                 break
-
+    print ('finished interpolating r2y by r1x')
+    if errorhandler !=[]:
+        print ('Please increase startrange and repeat the python executable.', len(errorhandler), ' values have been interpolated incorrectly.')
+        print ('These timesteps were interpolated with values that were too high:', errorhandler, 'r1 vals listed first, then r2.')
+    else:
+        print ('No interpolation errors!')
     rxo = sorted(r1x[r1xstart:r1xend] + r2x[r2xstart:r2xend]) # this is the time step for both r1 and r2 combined
     r1yo= r1yo[r1xstart:r1xendoff]
     r2yo=r2yo[r2xstart:r2xendoff]
+    print('Interpolated the x values. done!')
     return r1yo, r2yo, rxo
 
 def dopdf(canv, listoffiles, assembledstring):
@@ -219,21 +229,19 @@ for each in range(len(r1files)):
     r2file = os.path.basename(r2files[each])
     r1data = pd.read_csv(r1files[each], header=rheaderrow)
     datavalues = [list(x) for x in zip(*r1data.values)]
-    r1 = datavalues[rYcolumn]
+    r1y = datavalues[rYcolumn]
+    r1x = formattoseconds(datavalues[rXcolumn])
     r2data = pd.read_csv(r2files[each], header=rheaderrow) #using r1file for both, to conserve space in the ram lmaooo
     datavaluesii = [list(x) for x in zip(*r2data.values)]
-    r2 = datavaluesii[rYcolumn]
-    if len(r1)>len(r2):  # discards values from longer file so that r1 and r2 are the same length
-        r1 = r1[:len(r2)]
-    else:
-        r2 = r2[:len(r1)]
-    xlong = range(len(r1))
-    x = [i*rtimestep for i in x] #makes a column, counting from 1 up to the end of the file. Then multiplies all values by a float(set to 1)
+    r2y = datavaluesii[rYcolumn]
+    r2x = formattoseconds(datavaluesii[rXcolumn])
+    (r1, r2, rx) = interpolate(r1x,r1y,r2x,r2y, searchrange)
     r1overr2=[]
     current=[]
     currentr2=[]
     currenthigh=[]
-    for eachh in xrange:
+    timehigh=[]
+    for eachh in range(len(rx)):
         if r2[eachh] == 0:
             r1overr2.append(0) # if it can't actually divide by r2, adds 0 instead.
         else:
@@ -241,11 +249,13 @@ for each in range(len(r1files)):
         current.append(r1[eachh]/resistorohms)
         currentr2.append(r2[eachh]/resistorohms)
         if r1[eachh]>=0.0001:
-            currenthigh.append(r1[eachh]/resistorohms) 
-    timelist.append(len(currenthigh)*rtimestep)
-    meancurrentlist.append(sum(currenthigh)/len(currenthigh))
-    plt.plot(x, r1, color =colours[1], linewidth = 1.5, alpha = 0.7)
-    plt.plot(x, r2, color =colours[2], linewidth = 1.5, alpha = 0.7)
+            timeval = rx[eachh+1]-rx[eachh]
+            currenthigh.append(r1[eachh]*timeval)
+            timehigh.append(timeval)
+    timelist.append(sum(timehigh))
+    meancurrentlist.append(sum(currenthigh)/(resistorohms*timelist[each]))
+    plt.plot(rx, r1, color =colours[1], linewidth = 1.5, alpha = 0.7)
+    plt.plot(rx, r2, color =colours[2], linewidth = 1.5, alpha = 0.7)
     listoffilesr1.append(r1file[:6])
     listoffilesr2.append(r2file[:6])
     titlestring = '.'.join([listoffilesr1[each],"R1 vs R2","png"])
@@ -253,7 +263,7 @@ for each in range(len(r1files)):
     plt.plot(r1overr2, r1, color =colours[7], linewidth = 1.5, alpha = 0.7)
     titlestring = '.'.join([listoffilesr1[each],"R1 ÷ R2 vs R1","png"])
     plotandsave(titlestring,"R1/R2", "R1",False)
-    plt.plot(x, current, color =colours[6], linewidth = 1.5, alpha = 0.7)
+    plt.plot(rx, current, color =colours[6], linewidth = 1.5, alpha = 0.7)
     titlestring = '.'.join([listoffilesr1[each],"R2 Current","png"])
     plotandsave(titlestring,"power/W", "Time/MS",False)
 print (listoffilesr1)
@@ -270,7 +280,6 @@ for each in range(len(listoffilesr1)):
     seconds = timelist[each]
     minutes, seconds = divmod(seconds, 60)
     hours, minutes = divmod(minutes, 60)
-    
     stringlist = ['The mean current is', str(meancurrentlist[each]), 'Time(s) is', str(hours),'Hr',str(minutes),'min',str(seconds),'s']
     assembledstring = ' '.join(stringlist)
     print (filepath, listoffiles, assembledstring)
@@ -309,3 +318,4 @@ def findupperboundofcurve(enumerateddata, lowerstart):
             else:
                 ub=[each]
                 previous = each
+
