@@ -60,6 +60,69 @@ filepath = ''.join([filefolder,'S87\*'])
 
 #Command defines
 
+
+
+def interpolate(r1x,r1y,r2x,r2y, searchrange):
+    r1yo = r1y[0:]
+    r2yo = r2y[0:]
+    if r1x[0]< r2x[0]:
+        r2xstart = 0
+        for i in range(len(r1x)): # find the first number larger than r2x[1]  in the series r1x[]. Then, save its position in r1x[] to 'r1xstart'
+            if r1x[i]>=r2x[0]:
+                r1xstart = i
+                print(i, 'r1xstart')
+                break
+    else:
+        r1xstart =0
+        for i in range(len(r2x)): # find the first number larger than r2x[1]  in the series r1x[]. Then, save its position in r1x[] to 'r1xstart'
+            if r2x[i]>=r1x[0]:
+                r2xstart = i
+                print(r2xstart, r2x[i], 'r2xstart. this parts working yo')
+                break
+
+
+    if r1x[-1]>r2x[-1]: # if las value of r1x is biggest, take r2x up to its end 
+        r2xend = len(r2x)
+        r2xendoff= None
+        for i in range(len(r1x)):
+            if r1x[-(i+1)]<=max(r2x):
+                r1xend = len(r1x)-i
+                r1xendoff = -i
+                print(r1xend, r1xendoff, 'r1xend')
+                break  
+    else: # if las value of r2x is biggest, take r1x up to its end 
+        r1xend = len(r1x)
+        r1xendoff = None
+        for i in range(len(r2x)):
+            if r2x[-(i+1)]<=max(r1x):
+                r2xend = len(r2x)-i
+                r2xendoff =-i
+                print(r2xend, 'r1xend')
+                break
+
+
+    for i in range(r2xstart, r2xend):
+        startrange = i-searchrange
+        if startrange <0:
+            startrange =0
+        for j in range(len(r1x)): # for j in a search range 
+            if r1x[j] >=r2x[i]: # finds the first value greater than r2x[i]
+                r1yo.insert(   (-(len(r1x)-j) ),  r1y[(j-1)] + (   ( (r1y[j]-r1y[(j-1)])/(r1x[j]-r1x[(j-1)]) ) * (r2x[i]-r1x[(j-1)])    ) ) #adds interpolated value for r2x[i] to the list of y values
+                break
+    for i in range(r1xstart, r1xend):
+        startrange = i-searchrange
+        if startrange <0:
+            startrange =0
+        for j in range(len(r2x)): # for j in r1x from offset minus search range onwards
+            if r2x[j] >=r1x[i]: # finds first value greater than r1xi
+                r2yo.insert(-(len(r2x)-j) ,  r2y[(j-1)] + (   ( (r2y[j]-r2y[(j-1)])/(r2x[j]-r2x[(j-1)]) ) * (r1x[i]-r2x[(j-1)])    ) ) #adds interpolated value to the list
+                break
+
+    rxo = sorted(r1x[r1xstart:r1xend] + r2x[r2xstart:r2xend]) # this is the time step for both r1 and r2 combined
+    r1yo= r1yo[r1xstart:r1xendoff]
+    r2yo=r2yo[r2xstart:r2xendoff]
+    return r1yo, r2yo, rxo
+
 def dopdf(canv, listoffiles, assembledstring):
     canv.drawImage(listoffiles[0],10,2*cheigh/3,280,200,anchor='sw',anchorAtXY=True,showBoundary=False)
     canv.drawImage(listoffiles[1],cwidt/2,2*cheigh/3,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
