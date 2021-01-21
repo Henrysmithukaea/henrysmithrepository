@@ -47,7 +47,7 @@ rXcolumn =0 #now used for interpolation
 rYcolumn =1
 rheaderrow = 0
 resistorohms =1
-searchrange = 200 # range of data that r interpolation will search. Set to about 2000000 to search from the start each time
+searchrange = 5 # range of data that r interpolation will search. Set to about 2000000 to search from the start each time
 
 
 ### defines for pdf processor. p.s check derived defines for this
