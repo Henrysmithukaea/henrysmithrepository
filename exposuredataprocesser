@@ -60,7 +60,22 @@ filepath = ''.join([filefolder,'S87\*'])
 
 #Command defines
 
-
+def formattoseconds(x):
+    list = []
+    dots=[i for i, j in enumerate(x[0]) if j == ':']
+    if dots != [2,5,8]:
+        print(dots, 'should be 2,5,8. Returned [0]')
+        return [0]
+    a= x[0]
+    xosecs = int(a[6:8]) + (3600*int(a[0:2])) + (60*int(a[3:5])) + (0.001 *int(a[9:]))
+    for i in x:
+        hrs = int(i[0:2])
+        mins = int(i[3:5]) 
+        ms = int(i[9:]) 
+        seconds = int(i[6:8]) 
+        secs = (seconds +0.001*ms + 60*mins + 3600*hrs)-xosecs
+        list=list+[secs]
+    return sorted(list)
 
 def interpolate(r1x,r1y,r2x,r2y, searchrange):
     r1yo = r1y[0:]
