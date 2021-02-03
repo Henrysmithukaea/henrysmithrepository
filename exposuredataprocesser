@@ -9,16 +9,21 @@ from reportlab.lib.pagesizes import A4
 
 
 import pandas as pd
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import matplotlib.axes as axes
 import matplotlib.patches as patches
+import numpy as np
 import glob
 import os
+import datetime
+
+
 
 #defines
-filefolder = 'N:/CCFE/H3AT/TritiumScience/Tritium Research/Tricem/Data/Science/ScienceRun3-D2/' #write the filepath, and at the end, include '*' so the code works.
-                                                                                                  # ** is a "wildcard", so it goes through every folder in thesciencerun3-d2 directory 
+filefolder = 'N:/CCFE/H3AT/TritiumScience/Tritium Research/Tricem/Data/Science/ScienceRun2-D2/' #write the filepath, and at the end, include '*' so the code works.
+filepath = ''.join([filefolder,'S128\*']) # ** is a "wildcard", so it goes through every folder in thesciencerun3-d2 directory 
 outputfolder = 'N:\CCFE\H3AT\TritiumScience\Tritium Research\Tricem\Data\Science\ScienceRun3-D2\output'
 smoothfactor =3 # smoothing factor for any averaging we do on the graph (there's none atm)
 
@@ -27,14 +32,14 @@ colours = ("Yellow", "Green", "Blue", "Red", "Orange", "lightgreen", "navy", "Te
           "fuchsia", "grey", "darkslategray", "black", "royalblue", "rosybrown", "mediumseagreen") #will cycle through this index colouring each new graph in a new colour
 
 
-areacm2 = 12.82
+
 
 
 ### defines for daq
 daqXcolumn = 0 			#UNUSED. seems we increments seconds by 1s each timestep, so range() will work
 daqtimestep =1
 daqYcolumns = [2,3,4,5] 	#all columns in each sheet of the doc that contain Y data
-daqYcolumnsb = [2,3,4,5] #the header can sometimes be misaligned because pandas automatically throws away row 1 if there are more columns than headers
+skipchannel = 1 #the header can sometimes be misaligned because pandas automatically throws away row 1 if there are more columns than headers
 daqheaderrow = 7 				#row of the header (i.e the column titles)
 
 ### defines for diode
@@ -43,21 +48,23 @@ diodeYcolumn = 1 # columnthat contains Y data
 diodeheaderrow = 0 				#row of the header (i.e the column titles)
 
 ### defines for r comparison
-rXcolumn =0 #now used for interpolation
-rYcolumn =1
+rXcolumn =0 # used for interpolation
+rYcolumn =1 # used for interpolation
 rheaderrow = 0
-resistorohms =1
+resistorohms = 3.7
 searchrange = 5 # range of data that r interpolation will search. Set to about 2000000 to search from the start each time
 
+r1areacm2 = 12.82
+r2areacm2=29.16
 
 ### defines for pdf processor. p.s check derived defines for this
 registerFont(TTFont('arial','C:\\windows\\fonts\\arial.ttf'))
-img = ImageReader('N:\CCFE\H3AT\TritiumScience\Tritium Research\Tricem\Data\Science\Analysis\Macros\FinalLogo.jpg')
+img = ImageReader('N:\CCFE\H3AT\TritiumScience\Tritium Research\Tricem\Data\Science\Analysis\Macros\FinalLogo.jpg') #eurochem logo
 cwidt = 590
 cheigh = 785
 
 #derived defines. change ** to a named folder in filepath e.g s87
-filepath = ''.join([filefolder,'S87\*'])
+
 
 
 #Command defines
@@ -66,7 +73,7 @@ def formattoseconds(x):
     list = []
     dots=[i for i, j in enumerate(x[0]) if j == ':']
     if dots != [2,5,8]:
-        print(dots, 'should be 2,5,8. Returned [0]')
+        print('The first data point is in a format that is unrecognised - should be hh:mm:ss:mss',dots, 'should be 2,5,8. Returned [0]')
         return [0]
     for i in x:
         list.append(int(i[6:8]) + (3600*int(i[0:2])) + (60*int(i[3:5])) + (0.001 *int(i[9:])))
@@ -78,8 +85,9 @@ def interpolate(r1x,r1y,r2x,r2y,searchrange):
     r2yo = r2y[0:]
     if r1x[0]< r2x[0]:
         r2xstart = 0
+        rzxo = r2x[0]
         for i in range(len(r1x)): # find the first number larger than r2x[1]  in the series r1x[]. Then, save its position in r1x[] to 'r1xstart'
-            if r1x[i]>=r2x[0]:
+            if r1x[i]>=rzxo:
                 r1xstart = i
                 print(r1xstart, r1x[i], '= r1xstart. 0= r2xstart')
                 break
@@ -90,8 +98,6 @@ def interpolate(r1x,r1y,r2x,r2y,searchrange):
                 r2xstart = i
                 print(r2xstart, r2x[i], '= r2xstart. 0= r1xstart ')
                 break
-
-
     if r1x[-1]>r2x[-1]: # if las value of r1x is biggest, take r2x up to its end 
         r2xend = len(r2x)
         r2xendoff= None
@@ -110,7 +116,7 @@ def interpolate(r1x,r1y,r2x,r2y,searchrange):
             if r2x[-(i+1)]<=maxrix:
                 r2xend = len(r2x)-i
                 r2xendoff =-i
-                print(r2xend, 'r1xend')
+                print(r2xend, r2xendoff, 'r1xend')
                 break
     lenrix =len(r1x)
     errorhandler =[]
@@ -161,7 +167,7 @@ def dopdf(canv, listoffiles, assembledstring):
                     canv.drawImage(listoffiles[5],cwidt/2,10,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
     canv.setFont('arial',14)
     canv.setFillColor((0,0,0)) #change the text color
-    canv.drawCentredString(cwidt/2,(2*cheigh/3) +250, assembledstring)
+    canv.paragraph(assembledstring)
     canv.save()
 
 def plotandsave(titlestring,ystring,xstring,yv): # shows a plot and then saves it as a .png
@@ -175,9 +181,11 @@ def plotandsave(titlestring,ystring,xstring,yv): # shows a plot and then saves i
     plt.savefig(savestring, bbox_inches='tight') #this will throw a bunch of .png files into the folder specified in filepath, overwriting anything with the same name.
     plt.show()				#shows you the graph that was saved
 
-def loadfilesmatching(name): # loads files and returns a list of them ordered by name alphabetically
-    filefind = ''.join([filepath, name])
-    files = sorted(glob.glob(filefind,recursive=True))
+def loadfilesmatching(namelist): # loads files and returns a list of them ordered by name alphabetically
+    files = []
+    for i in namelist:
+        filefind = ''.join([filepath, i])
+        files=files+sorted(glob.glob(filefind,recursive=True))
     print ('Began reading', files, len(files))
     return files
     
@@ -185,24 +193,25 @@ def loadfilesmatching(name): # loads files and returns a list of them ordered by
 # The Actual Script
 
 ###daq
-daqfiles = loadfilesmatching("daq.csv")
+daqfiles = loadfilesmatching(["daq*.csv"])
 for daqfile in daqfiles:
-    daqdata = pd.read_csv(daqfile, header=daqheaderrow)
+    daqdata = pd.read_csv(daqfile, header=daqheaderrow, usecols = [0]+daqYcolumns) # picks out the daq data only and discards the rest
     datavalues = [list(x) for x in zip(*daqdata.values)]
     datalabels = daqdata.columns
+    daqydatanos = range(1,len(daqYcolumns)+1) # this is a list of numbers equivalent to the columns in daqdata that are actually y data
     print(datalabels)
     x = [i*daqtimestep for i in range(len(datavalues[0]))]
-    for each in daqYcolumns:
+    for each in daqydatanos:
         y = datavalues[each]
         plt.plot(x, y, color =colours[each], linewidth = 1.5, alpha = 0.7)
-    plt.legend(datalabels[daqYcolumnsb], bbox_to_anchor=(1, 1))
+    plt.legend(datalabels[daqydatanos[skipchannel:]], bbox_to_anchor=(1, 1))
     titlefile =  os.path.basename(daqfile)
     titlestring = '.'.join([titlefile[:6],"Pressure in System" ,"png"])
     plotandsave(titlestring,"pressure/V", "Time/S",-8)
 
 ###diode
-diodefiles = loadfilesmatching("diode.csv")
-for diodefile in diodefiles:
+diodefiles = loadfilesmatching(["diode*.csv"])
+for count, diodefile in enumerate(diodefiles):
     diodedata = pd.read_csv(diodefile, sep='\t', header=diodeheaderrow)
     datavalues = [list(x) for x in zip(*diodedata.values)]
     datalabels = diodedata.columns
@@ -212,17 +221,18 @@ for diodefile in diodefiles:
     plt.plot(x, y, color =colours[0], linewidth = 1.5, alpha = 0.7)
     plt.legend(datalabels[diodeYcolumn], bbox_to_anchor=(1, 1))
     titlefile =  os.path.basename(diodefile)
-    titlestring = '.'.join([titlefile[:6],"light output to diode" ,"png"])
+    titlestring = '.'.join([titlefile[:6],"light output to diode", str(count+1),"png"])
     plotandsave(titlestring,"power/W","Time/MS",0)
 
 
 
 ###r1 and r2
-r2files = loadfilesmatching("R2.csv")
-r1files = loadfilesmatching("R1.csv")# DOES NOT CHECK THE FILES MATCH.
+r2files = loadfilesmatching(["R2*.csv"])
+r1files = loadfilesmatching(["R1*.csv"])# DOES NOT CHECK THE FILES MATCH.
 listoffilesr1 =[]
 listoffilesr2=[]
 meancurrentlist=[]
+totalcoulomblist=[]
 timelist =[]
 for each in range(len(r1files)):
     r1file = os.path.basename(r1files[each])
@@ -241,6 +251,7 @@ for each in range(len(r1files)):
     currentr2=[]
     currenthigh=[]
     timehigh=[]
+    avgr1r2list=[]
     for eachh in range(len(rx)):
         if r2[eachh] == 0:
             r1overr2.append(0) # if it can't actually divide by r2, adds 0 instead.
@@ -253,7 +264,10 @@ for each in range(len(r1files)):
             currenthigh.append(r1[eachh]*timeval)
             timehigh.append(timeval)
     timelist.append(sum(timehigh))
-    meancurrentlist.append(sum(currenthigh)/(resistorohms*timelist[each]))
+    totalcoulombs=sum(currenthigh)/resistorohms
+    totalcoulomblist.append(totalcoulombs)
+    meancurrentlist.append(totalcoulombs/timelist[each])
+    avgr1r2list.append(sum(r1overr2)/len(r1overr2))
     plt.plot(rx, r1, color =colours[1], linewidth = 1.5, alpha = 0.7)
     plt.plot(rx, r2, color =colours[2], linewidth = 1.5, alpha = 0.7)
     listoffilesr1.append(r1file[:6])
@@ -267,8 +281,11 @@ for each in range(len(r1files)):
     titlestring = '.'.join([listoffilesr1[each],"R2 Current","png"])
     plotandsave(titlestring,"power/W", "Time/MS",False)
 print (listoffilesr1)
-if not listoffilesr1==listoffilesr2:
+
+if listoffilesr1!=listoffilesr2:
     print ('the files used for r1 and r2 do not seem to match', listoffilesr1, listoffilesr2)
+if len(daqfiles) != len(listoffilesr1) or len (daqfiles) != len(diodefiles):
+    print ('the number of files found for each folder don\'t appear to match. R1:', len(listoffilesr1), 'diodefiles:', len(diodefiles), 'daqfiles:', len(daqfiles) )
 
 for each in range(len(listoffilesr1)):
     file = listoffilesr1[each]
@@ -280,7 +297,8 @@ for each in range(len(listoffilesr1)):
     seconds = timelist[each]
     minutes, seconds = divmod(seconds, 60)
     hours, minutes = divmod(minutes, 60)
-    stringlist = ['The mean current is', str(meancurrentlist[each]), 'Time(s) is', str(hours),'Hr',str(minutes),'min',str(seconds),'s']
+    currentdate = datetime.datetime.now()
+    stringlist = ['Total R1 Charge:', str(totalcoulomblist[each]), 'C. Average R1 current:', str(meancurrentlist[each]), 'A,\n <br/> Average R1/R2:', str(avgr1r2list[each]), '\n <br/> Plasma Duration:', str(hours),'Hr',str(minutes),'min',str(seconds),'s, or ', str(timelist[each]), 'seconds. Today\'s date:', str(currentdate)]
     assembledstring = ' '.join(stringlist)
     print (filepath, listoffiles, assembledstring)
     dopdf(canv, listoffiles, assembledstring)
@@ -292,6 +310,7 @@ print ('"My work here is done." The python removes its sunglasses, revealing a p
 noisebound = 10 # if the absolute value is less than the noise boundary, the data point is treated as noise
 
 def findlowerboundofcurve(enumerateddata):
+    #meancurrentlist[each]*(areacm2list[each]/r1areacm2)
     for each in enumerateddata:
         if (abs(enumerateddata[each])>=noisebound):
             if (each-previous)<10:
@@ -318,4 +337,3 @@ def findupperboundofcurve(enumerateddata, lowerstart):
             else:
                 ub=[each]
                 previous = each
-
