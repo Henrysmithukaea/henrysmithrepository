@@ -154,8 +154,8 @@ def interpolate(r1x,r1y,r2x,r2y,searchrange):
     print('Interpolated the x values. done!')
     return r1yo, r2yo, rxo
 
-def dopdf(canv, listoffiles, assembledstring):
-    canv.drawImage(listoffiles[0],10,2*cheigh/3,280,200,anchor='sw',anchorAtXY=True,showBoundary=False)
+def dopdf(canv, listoffiles, stra, strb, strc):
+    canv.drawImage(listoffiles[0],10,2*cheigh/3,310,200,anchor='sw',anchorAtXY=True,showBoundary=False)
     canv.drawImage(listoffiles[1],cwidt/2,2*cheigh/3,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
     if len(listoffiles)>=3:
         canv.drawImage(listoffiles[2],10,(cheigh+15)/3,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
@@ -167,7 +167,9 @@ def dopdf(canv, listoffiles, assembledstring):
                     canv.drawImage(listoffiles[5],cwidt/2,10,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
     canv.setFont('arial',14)
     canv.setFillColor((0,0,0)) #change the text color
-    canv.paragraph(assembledstring)
+    canv.drawCentredString(cwidt/2,(2*cheigh/3) +250, stra)
+    canv.drawCentredString(cwidt/2,(2*cheigh/3) +230, strb)
+    canv.drawCentredString(cwidt/2,(2*cheigh/3) +210, strc)
     canv.save()
 
 def plotandsave(titlestring,ystring,xstring,yv): # shows a plot and then saves it as a .png
@@ -298,10 +300,12 @@ for each in range(len(listoffilesr1)):
     minutes, seconds = divmod(seconds, 60)
     hours, minutes = divmod(minutes, 60)
     currentdate = datetime.datetime.now()
-    stringlist = ['Total R1 Charge:', str(totalcoulomblist[each]), 'C. Average R1 current:', str(meancurrentlist[each]), 'A,\n <br/> Average R1/R2:', str(avgr1r2list[each]), '\n <br/> Plasma Duration:', str(hours),'Hr',str(minutes),'min',str(seconds),'s, or ', str(timelist[each]), 'seconds. Today\'s date:', str(currentdate)]
-    assembledstring = ' '.join(stringlist)
-    print (filepath, listoffiles, assembledstring)
-    dopdf(canv, listoffiles, assembledstring)
+    stringlist = ['Total R1 Charge:', format(totalcoulomblist[each], '.2f'), 'C. Average R1 current:', str(meancurrentlist[each]), 'A', 'Average R1/R2:', format(avgr1r2list[each], '.2f'), ', Plasma Duration:', str(hours),'Hr',str(minutes),'min',format(seconds, '.2f'), 's, or ', format(timelist[each], '.2f'), 'seconds. Today\'s date:', str(currentdate)]
+    stra = ' '.join(stringlist[:5])
+    strb = ' '.join(stringlist[5:14])
+    strc = ' '.join(stringlist[14:])
+    print (filepath, listoffiles, stra, strb, strc)
+    dopdf(canv, listoffiles, stra, strb, strc)
 print ('"My work here is done." The python removes its sunglasses, revealing a pair of slightly smaller sunglasses, and exits the room.')
 
                        
