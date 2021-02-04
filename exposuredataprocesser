@@ -317,7 +317,7 @@ for each, file in enumerate(listoffilesr1):
     stra = ' '.join(stringlist[:5])
     strb = ' '.join(stringlist[5:14])
     strc = ' '.join(stringlist[14:])
-    print (filepath, listoffiles, stra, strb, strc, title)
+    print (stra, strb, strc)
     dopdf(canv, listoffiles, stra, strb, strc, title)
 print ('"My work here is done." The python removes its sunglasses, revealing a pair of slightly smaller sunglasses, and exits the room.')
 
