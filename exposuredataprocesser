@@ -22,17 +22,14 @@ import datetime
 
 
 #defines
-filefolder = 'N:/CCFE/H3AT/TritiumScience/Tritium Research/Tricem/Data/Science/ScienceRun2-D2/' #write the filepath, and at the end, include '*' so the code works.
-filepath = ''.join([filefolder,'S128\*']) # ** is a "wildcard", so it goes through every folder in thesciencerun3-d2 directory 
+filefolder = 'N:/CCFE/H3AT/TritiumScience/Tritium Research/Tricem/Data/Science/ScienceRun3-D2/' #write the filepath
+filepath = ''.join([filefolder,'S87\*']) # ** is a "wildcard", so it goes through every folder in the sciencerun3-d2 directory 
 outputfolder = 'N:\CCFE\H3AT\TritiumScience\Tritium Research\Tricem\Data\Science\ScienceRun3-D2\output'
 smoothfactor =3 # smoothing factor for any averaging we do on the graph (there's none atm)
 
 colours = ("Yellow", "Green", "Blue", "Red", "Orange", "lightgreen", "navy", "Teal",
            "purple", "salmon", "darkgoldenrod", "lightseagreen", "darkolivegreen", "saddlebrown", "cornflowerblue",
           "fuchsia", "grey", "darkslategray", "black", "royalblue", "rosybrown", "mediumseagreen") #will cycle through this index colouring each new graph in a new colour
-
-
-
 
 
 ### defines for daq
@@ -46,6 +43,9 @@ daqheaderrow = 7 				#row of the header (i.e the column titles)
 diodeXcolumn = 0 			#only column in each sheet of the doc that contains the x data. This is the sample data column, giving us Time in Seconds
 diodeYcolumn = 1 # columnthat contains Y data
 diodeheaderrow = 0 				#row of the header (i.e the column titles)
+sp = '\t' # column separator for diode files. may be ';'
+diodefilename = "diode*.csv" #"optic*.csv" # name of files. use "diode*.csv"
+
 
 ### defines for r comparison
 rXcolumn =0 # used for interpolation
@@ -54,8 +54,10 @@ rheaderrow = 0
 resistorohms = 3.7
 searchrange = 5 # range of data that r interpolation will search. Set to about 2000000 to search from the start each time
 
-r1areacm2 = 12.82
-r2areacm2=29.16
+r1areacm2 = 12.82 # used to calc coulombs, once i can load the sample size in automatically
+sampleareacm2 = 10
+
+r2areacm2=29.16#unused
 
 ### defines for pdf processor. p.s check derived defines for this
 registerFont(TTFont('arial','C:\\windows\\fonts\\arial.ttf'))
@@ -68,6 +70,30 @@ cheigh = 785
 
 
 #Command defines
+
+def dopdf(canv, listoffiles, stra, strb, strc, title):
+    canv.drawImage(listoffiles[0],20,(2*cheigh/3)-20,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
+    canv.drawImage(listoffiles[1],(cwidt/2)+20,(2*cheigh/3)-20,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
+    if len(listoffiles)>=3:
+        canv.drawImage(listoffiles[2],20,(cheigh+15)/3,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
+        if len(listoffiles)>=4:
+            canv.drawImage(listoffiles[3],(cwidt/2)+20,(cheigh+15)/3,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
+            if len(listoffiles)>=5:
+                canv.drawImage(listoffiles[4],20,20,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
+                if len(listoffiles)>=6:
+                    canv.drawImage(listoffiles[5],(cwidt/2)+20,20,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
+    canv.setFont('arial',14)
+    canv.setFillColor((0,0,0)) #change the text color
+    subtitle=input(strsubtitle)
+    canv.drawCentredString(cwidt/2,(2*cheigh/3) +250, subtitle)
+    canv.drawCentredString(cwidt/2,(2*cheigh/3) +230, stra)
+    canv.drawCentredString(cwidt/2,(2*cheigh/3) +210, strb)
+    canv.drawCentredString(cwidt/2,(2*cheigh/3) +190, strc)
+    canv.setFont('arial',28)
+    canv.drawString(20,cheigh+25, title)
+    print ('generated a .pdf titled', file, title, ' report.pdf')
+    canv.save()
+
 
 def formattoseconds(x):
     list = []
@@ -154,23 +180,7 @@ def interpolate(r1x,r1y,r2x,r2y,searchrange):
     print('Interpolated the x values. done!')
     return r1yo, r2yo, rxo
 
-def dopdf(canv, listoffiles, stra, strb, strc):
-    canv.drawImage(listoffiles[0],10,2*cheigh/3,310,200,anchor='sw',anchorAtXY=True,showBoundary=False)
-    canv.drawImage(listoffiles[1],cwidt/2,2*cheigh/3,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
-    if len(listoffiles)>=3:
-        canv.drawImage(listoffiles[2],10,(cheigh+15)/3,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
-        if len(listoffiles)>=4:
-            canv.drawImage(listoffiles[3],cwidt/2,(cheigh+15)/3,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
-            if len(listoffiles)>=5:
-                canv.drawImage(listoffiles[4],10,10,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
-                if len(listoffiles)>=6:
-                    canv.drawImage(listoffiles[5],cwidt/2,10,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
-    canv.setFont('arial',14)
-    canv.setFillColor((0,0,0)) #change the text color
-    canv.drawCentredString(cwidt/2,(2*cheigh/3) +250, stra)
-    canv.drawCentredString(cwidt/2,(2*cheigh/3) +230, strb)
-    canv.drawCentredString(cwidt/2,(2*cheigh/3) +210, strc)
-    canv.save()
+
 
 def plotandsave(titlestring,ystring,xstring,yv): # shows a plot and then saves it as a .png
     plt.title(titlestring)
@@ -187,15 +197,16 @@ def loadfilesmatching(namelist): # loads files and returns a list of them ordere
     files = []
     for i in namelist:
         filefind = ''.join([filepath, i])
-        files=files+sorted(glob.glob(filefind,recursive=True))
+        files = files + sorted(glob.glob(filefind,recursive=True))
     print ('Began reading', files, len(files))
-    return files
+    return sorted(files)
     
+
     
 # The Actual Script
 
 ###daq
-daqfiles = loadfilesmatching(["daq*.csv"])
+daqfiles = loadfilesmatching(["daq*.csv", 'DAQ*.csv'])
 for daqfile in daqfiles:
     daqdata = pd.read_csv(daqfile, header=daqheaderrow, usecols = [0]+daqYcolumns) # picks out the daq data only and discards the rest
     datavalues = [list(x) for x in zip(*daqdata.values)]
@@ -206,22 +217,21 @@ for daqfile in daqfiles:
     for each in daqydatanos:
         y = datavalues[each]
         plt.plot(x, y, color =colours[each], linewidth = 1.5, alpha = 0.7)
-    plt.legend(datalabels[daqydatanos[skipchannel:]], bbox_to_anchor=(1, 1))
+    plt.legend(datalabels[daqydatanos[skipchannel:]])# can include ', bbox_to_anchor=(1, 1)' to make labels appear inside box
     titlefile =  os.path.basename(daqfile)
     titlestring = '.'.join([titlefile[:6],"Pressure in System" ,"png"])
     plotandsave(titlestring,"pressure/V", "Time/S",-8)
 
 ###diode
-diodefiles = loadfilesmatching(["diode*.csv"])
+diodefiles = loadfilesmatching([diodefilename])
 for count, diodefile in enumerate(diodefiles):
-    diodedata = pd.read_csv(diodefile, sep='\t', header=diodeheaderrow)
+    diodedata = pd.read_csv(diodefile, sep=sp, header=diodeheaderrow)
     datavalues = [list(x) for x in zip(*diodedata.values)]
     datalabels = diodedata.columns
     print(datalabels)
     x = datavalues[diodeXcolumn]
     y = pd.Series(datavalues[diodeYcolumn]).rolling(window=smoothfactor).mean()
-    plt.plot(x, y, color =colours[0], linewidth = 1.5, alpha = 0.7)
-    plt.legend(datalabels[diodeYcolumn], bbox_to_anchor=(1, 1))
+    plt.plot(x, y, color =colours[0], linewidth = 1.5, alpha = 0.7) #plt.legend(datalabels[diodeYcolumn])
     titlefile =  os.path.basename(diodefile)
     titlestring = '.'.join([titlefile[:6],"light output to diode", str(count+1),"png"])
     plotandsave(titlestring,"power/W","Time/MS",0)
@@ -229,8 +239,8 @@ for count, diodefile in enumerate(diodefiles):
 
 
 ###r1 and r2
-r2files = loadfilesmatching(["R2*.csv"])
-r1files = loadfilesmatching(["R1*.csv"])# DOES NOT CHECK THE FILES MATCH.
+r2files = loadfilesmatching(["R*2*.csv"])
+r1files = loadfilesmatching(["R*1*.csv"])# DOES NOT CHECK THE FILES MATCH.
 listoffilesr1 =[]
 listoffilesr2=[]
 meancurrentlist=[]
@@ -266,7 +276,7 @@ for each in range(len(r1files)):
             currenthigh.append(r1[eachh]*timeval)
             timehigh.append(timeval)
     timelist.append(sum(timehigh))
-    totalcoulombs=sum(currenthigh)/resistorohms
+    totalcoulombs=(sum(currenthigh)*sampleareacm2)/(resistorohms*r1areacm2)
     totalcoulomblist.append(totalcoulombs)
     meancurrentlist.append(totalcoulombs/timelist[each])
     avgr1r2list.append(sum(r1overr2)/len(r1overr2))
@@ -275,6 +285,7 @@ for each in range(len(r1files)):
     listoffilesr1.append(r1file[:6])
     listoffilesr2.append(r2file[:6])
     titlestring = '.'.join([listoffilesr1[each],"R1 vs R2","png"])
+    plt.legend(['R1', 'R2'])
     plotandsave(titlestring,"power/W", "Time/S",False)
     plt.plot(r1overr2, r1, color =colours[7], linewidth = 1.5, alpha = 0.7)
     titlestring = '.'.join([listoffilesr1[each],"R1 ÷ R2 vs R1","png"])
@@ -283,18 +294,20 @@ for each in range(len(r1files)):
     titlestring = '.'.join([listoffilesr1[each],"R2 Current","png"])
     plotandsave(titlestring,"power/W", "Time/MS",False)
 print (listoffilesr1)
-
+    
 if listoffilesr1!=listoffilesr2:
     print ('the files used for r1 and r2 do not seem to match', listoffilesr1, listoffilesr2)
-if len(daqfiles) != len(listoffilesr1) or len (daqfiles) != len(diodefiles):
+if not len(daqfiles) == len(listoffilesr1) == len(diodefiles):
     print ('the number of files found for each folder don\'t appear to match. R1:', len(listoffilesr1), 'diodefiles:', len(diodefiles), 'daqfiles:', len(daqfiles) )
 
-for each in range(len(listoffilesr1)):
-    file = listoffilesr1[each]
+strtitle = ''.join(['write a title for the file', r1files[each], ', including sample no. and material. E.g S87, Eurofer'])
+for each, file in enumerate(listoffilesr1):
+    title=input(strtitle)
+    strsubtitle = ''.join(['write subtitle for file', r1files[each], '. You may want to include the data on magnetron, anode, extractor, treatment temp. \nE.g 0.0 DPA, 5 hours, 40mA magnetron, 400V anode, -200V extractor, room temperature. \n You can copy paste this from Tricem\Documents\ElectronicLogs\ on the n drive'])
     filepath = ''.join([outputfolder, '/', file, '*' ])
-    canvname = ''.join([outputfolder, '/!', file, ' report.pdf'])
+    canvname = ''.join([outputfolder, '/!', file, title, ' report.pdf'])
     canv = Canvas(canvname,pagesize=A4)
-    canv.drawImage(img, 240, cheigh, 240, 55,anchor='sw',anchorAtXY=True,showBoundary=False)
+    canv.drawImage(img, 280, cheigh, 280, 55,anchor='sw',anchorAtXY=True,showBoundary=False)
     listoffiles = sorted(glob.glob(filepath,recursive=True))
     seconds = timelist[each]
     minutes, seconds = divmod(seconds, 60)
@@ -304,8 +317,8 @@ for each in range(len(listoffilesr1)):
     stra = ' '.join(stringlist[:5])
     strb = ' '.join(stringlist[5:14])
     strc = ' '.join(stringlist[14:])
-    print (filepath, listoffiles, stra, strb, strc)
-    dopdf(canv, listoffiles, stra, strb, strc)
+    print (filepath, listoffiles, stra, strb, strc, title)
+    dopdf(canv, listoffiles, stra, strb, strc, title)
 print ('"My work here is done." The python removes its sunglasses, revealing a pair of slightly smaller sunglasses, and exits the room.')
 
                        
@@ -341,3 +354,4 @@ def findupperboundofcurve(enumerateddata, lowerstart):
             else:
                 ub=[each]
                 previous = each
+                
