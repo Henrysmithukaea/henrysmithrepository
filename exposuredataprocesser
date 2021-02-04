@@ -18,41 +18,49 @@ import numpy as np
 import glob
 import os
 import datetime
-
-
-
-#defines
-filefolder = 'N:/CCFE/H3AT/TritiumScience/Tritium Research/Tricem/Data/Science/ScienceRun3-D2/' #write the filepath
-filepath = ''.join([filefolder,'S87\*']) # ** is a "wildcard", so it goes through every folder in the sciencerun3-d2 directory 
-outputfolder = 'N:\CCFE\H3AT\TritiumScience\Tritium Research\Tricem\Data\Science\ScienceRun3-D2\output'
-smoothfactor =3 # smoothing factor for any averaging we do on the graph (there's none atm)
+import csv
 
 colours = ("Yellow", "Green", "Blue", "Red", "Orange", "lightgreen", "navy", "Teal",
            "purple", "salmon", "darkgoldenrod", "lightseagreen", "darkolivegreen", "saddlebrown", "cornflowerblue",
           "fuchsia", "grey", "darkslategray", "black", "royalblue", "rosybrown", "mediumseagreen") #will cycle through this index colouring each new graph in a new colour
 
 
+
+
+#defines
+filefolder = 'N:/CCFE/H3AT/TritiumScience/TSG Members/Ant/TRiCEM/AWE/Data/' #write the filepath
+filepath = ''.join([filefolder,'**\*']) # ** is a "wildcard", so it goes through every folder in the sciencerun3-d2 directory 
+outputfolder = 'N:\CCFE\H3AT\TritiumScience\TSG Members\Ant\TRiCEM\AWE\Data\output'
+
+smoothfactor =3 # smoothing factor for any averaging we do on the graph (there's none atm)
+
+
 ### defines for daq
 daqXcolumn = 0 			#UNUSED. seems we increments seconds by 1s each timestep, so range() will work
-daqtimestep =1
+daqtimestep = 1
 daqYcolumns = [2,3,4,5] 	#all columns in each sheet of the doc that contain Y data
 skipchannel = 1 #the header can sometimes be misaligned because pandas automatically throws away row 1 if there are more columns than headers
 daqheaderrow = 7 				#row of the header (i.e the column titles)
 
 ### defines for diode
 diodeXcolumn = 0 			#only column in each sheet of the doc that contains the x data. This is the sample data column, giving us Time in Seconds
-diodeYcolumn = 1 # columnthat contains Y data
-diodeheaderrow = 0 				#row of the header (i.e the column titles)
-sp = '\t' # column separator for diode files. may be ';'
-diodefilename = "diode*.csv" #"optic*.csv" # name of files. use "diode*.csv"
+diodeYcolumn = 3 # columnthat contains Y data
+diodeheaderrow = 15 				#row of the header (i.e the column titles)
+sp = ';' # column separator for diode files. may be ';'
+diodefilename = "optic*.csv" #"optic*.csv" # name of files. use "diode*.csv"
 
 
 ### defines for r comparison
+r1filenames = ["R1*.csv", "record*1*.csv"]
+r2filenames = ["R2*.csv", "record*2*.csv"]
 rXcolumn =0 # used for interpolation
 rYcolumn =1 # used for interpolation
 rheaderrow = 0
 resistorohms = 3.7
+r1highval = 0.0001
+
 searchrange = 5 # range of data that r interpolation will search. Set to about 2000000 to search from the start each time
+
 
 r1areacm2 = 12.82 # used to calc coulombs, once i can load the sample size in automatically
 sampleareacm2 = 10
@@ -205,27 +213,10 @@ def loadfilesmatching(namelist): # loads files and returns a list of them ordere
     
 # The Actual Script
 
-###daq
-daqfiles = loadfilesmatching(["daq*.csv", 'DAQ*.csv'])
-for daqfile in daqfiles:
-    daqdata = pd.read_csv(daqfile, header=daqheaderrow, usecols = [0]+daqYcolumns) # picks out the daq data only and discards the rest
-    datavalues = [list(x) for x in zip(*daqdata.values)]
-    datalabels = daqdata.columns
-    daqydatanos = range(1,len(daqYcolumns)+1) # this is a list of numbers equivalent to the columns in daqdata that are actually y data
-    print(datalabels)
-    x = [i*daqtimestep for i in range(len(datavalues[0]))]
-    for each in daqydatanos:
-        y = datavalues[each]
-        plt.plot(x, y, color =colours[each], linewidth = 1.5, alpha = 0.7)
-    plt.legend(datalabels[daqydatanos[skipchannel:]])# can include ', bbox_to_anchor=(1, 1)' to make labels appear inside box
-    titlefile =  os.path.basename(daqfile)
-    titlestring = '.'.join([titlefile[:6],"Pressure in System" ,"png"])
-    plotandsave(titlestring,"pressure/V", "Time/S",-8)
-
 ###diode
 diodefiles = loadfilesmatching([diodefilename])
 for count, diodefile in enumerate(diodefiles):
-    diodedata = pd.read_csv(diodefile, sep=sp, header=diodeheaderrow)
+    diodedata = pd.read_csv(diodefile, sep=sp, quoting=3, encoding='utf-8', skiprows=(diodeheaderrow-1), na_values= ' No device found')
     datavalues = [list(x) for x in zip(*diodedata.values)]
     datalabels = diodedata.columns
     print(datalabels)
@@ -239,8 +230,8 @@ for count, diodefile in enumerate(diodefiles):
 
 
 ###r1 and r2
-r2files = loadfilesmatching(["R*2*.csv"])
-r1files = loadfilesmatching(["R*1*.csv"])# DOES NOT CHECK THE FILES MATCH.
+r2files = loadfilesmatching(r1filenames)
+r1files = loadfilesmatching(r2filenames)# DOES NOT CHECK THE FILES MATCH.
 listoffilesr1 =[]
 listoffilesr2=[]
 meancurrentlist=[]
@@ -271,7 +262,7 @@ for each in range(len(r1files)):
             r1overr2.append(r1[eachh]/r2[eachh])
         current.append(r1[eachh]/resistorohms)
         currentr2.append(r2[eachh]/resistorohms)
-        if r1[eachh]>=0.0001:
+        if r1[eachh]>=r1highval:
             timeval = rx[eachh+1]-rx[eachh]
             currenthigh.append(r1[eachh]*timeval)
             timehigh.append(timeval)
@@ -355,3 +346,4 @@ def findupperboundofcurve(enumerateddata, lowerstart):
                 ub=[each]
                 previous = each
                 
+            
