@@ -11,6 +11,7 @@ smoothfactor =3 # smoothing factor for any averaging we do on the graph (there's
 
 
 ### defines for daq
+daqfilename = ["daq*.csv"]
 daqXcolumn = 0 			#UNUSED. seems we increments seconds by 1s each timestep, so range() will work
 daqtimestep = 1
 daqYcolumns = [2,3,4,5] 	#all columns in each sheet of the doc that contain Y data
@@ -22,7 +23,7 @@ diodeXcolumn = 0 			#only column in each sheet of the doc that contains the x da
 diodeYcolumn = 3 # columnthat contains Y data
 diodeheaderrow = 15 				#row of the header (i.e the column titles)
 sp = ';' # column separator for diode files. may be ';'
-diodefilename = "optic*.csv" #"optic*.csv" # name of files. use "diode*.csv"
+diodefilename = ["optic*.csv", "diode*.csv"]  #"optic*.csv" # name of files. use "diode*.csv"
 
 
 ### defines for r comparison
@@ -208,10 +209,26 @@ def loadfilesmatching(namelist): # loads files and returns a list of them ordere
     
 # The Actual Script
 
-daqfiles = [0]
+###daq
+daqfiles = loadfilesmatching(daqfilename)
+for daqfile in daqfiles:
+    daqdata = pd.read_csv(daqfile, header=daqheaderrow, usecols = [0]+daqYcolumns) # picks out the daq data only and discards the rest
+    datavalues = [list(x) for x in zip(*daqdata.values)]
+    datalabels = daqdata.columns
+    daqydatanos = range(1,len(daqYcolumns)+1) # this is a list of numbers equivalent to the columns in daqdata that are actually y data
+    print(datalabels)
+    x = [i*daqtimestep for i in range(len(datavalues[0]))]
+    for each in daqydatanos:
+        y = datavalues[each]
+        plt.plot(x, y, color =colours[each], linewidth = 1.5, alpha = 0.7)
+    plt.legend(datalabels[daqydatanos[skipchannel:]], bbox_to_anchor=(1, 1))
+    titlefile =  os.path.basename(daqfile)
+    titlestring = '.'.join([titlefile[:6],"Pressure in System" ,"png"])
+    plotandsave(titlestring,"pressure/V", "Time/S",-8)
+
 
 ###diode
-diodefiles = loadfilesmatching([diodefilename])
+diodefiles = loadfilesmatching(diodefilename)
 for count, diodefile in enumerate(diodefiles):
     diodedata = pd.read_csv(diodefile, sep=sp, quoting=3, encoding='utf-8', skiprows=(diodeheaderrow-1), na_values= ' No device found')
     datavalues = [list(x) for x in zip(*diodedata.values)]
