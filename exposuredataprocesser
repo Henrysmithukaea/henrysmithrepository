@@ -1,35 +1,11 @@
-# from reportlab.lib.utils import ImageReader
-from reportlab.pdfgen.canvas import Canvas
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfbase.pdfmetrics import registerFont
-from reportlab.lib.pagesizes import A4
 
 # henry.smith@ukaea.uk
 
-
-import pandas as pd
-import matplotlib
-import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
-import matplotlib.axes as axes
-import matplotlib.patches as patches
-import numpy as np
-import glob
-import os
-import datetime
-import csv
-
-colours = ("Yellow", "Green", "Blue", "Red", "Orange", "lightgreen", "navy", "Teal",
-           "purple", "salmon", "darkgoldenrod", "lightseagreen", "darkolivegreen", "saddlebrown", "cornflowerblue",
-          "fuchsia", "grey", "darkslategray", "black", "royalblue", "rosybrown", "mediumseagreen") #will cycle through this index colouring each new graph in a new colour
-
-
-
-
 #defines
-filefolder = 'N:/CCFE/H3AT/TritiumScience/TSG Members/Ant/TRiCEM/AWE/Data/' #write the filepath
-filepath = ''.join([filefolder,'T098_3\*']) # ** is a "wildcard", so it goes through every folder in the sciencerun3-d2 directory 
+filefolder = 'N:/CCFE/H3AT/TritiumScience/TSG Members/Ant/TRiCEM/AWE/Data/' #write the location of the folder to search in
+filepath = ''.join([filefolder,'**\*']) # ** is a "wildcard", so it goes through every folder in the 'filefolder' directory 
 outputfolder = 'N:\CCFE\H3AT\TritiumScience\TSG Members\Ant\TRiCEM\AWE\Data\output'
+
 
 smoothfactor =3 # smoothing factor for any averaging we do on the graph (there's none atm)
 
@@ -72,8 +48,28 @@ img = ImageReader('N:\CCFE\H3AT\TritiumScience\Tritium Research\Tricem\Data\Scie
 cwidt = 590
 cheigh = 785
 
-#derived defines. change ** to a named folder in filepath e.g s87
 
+#imported python directories 
+# from reportlab.lib.utils import ImageReader
+from reportlab.pdfgen.canvas import Canvas
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase.pdfmetrics import registerFont
+from reportlab.lib.pagesizes import A4
+import pandas as pd
+import matplotlib
+import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
+import matplotlib.axes as axes
+import matplotlib.patches as patches
+import numpy as np
+import glob
+import os
+import datetime
+import csv
+
+colours = ("Yellow", "Green", "Blue", "Red", "Orange", "lightgreen", "navy", "Teal",
+           "purple", "salmon", "darkgoldenrod", "lightseagreen", "darkolivegreen", "saddlebrown", "cornflowerblue",
+          "fuchsia", "grey", "darkslategray", "black", "royalblue", "rosybrown", "mediumseagreen") #will cycle through this index colouring each new graph in a new colour
 
 
 #Command defines
@@ -184,7 +180,7 @@ def interpolate(r1x,r1y,r2x,r2y,searchrange):
     rxo = sorted(r1x[r1xstart:r1xend] + r2x[r2xstart:r2xend]) # this is the time step for both r1 and r2 combined
     r1yo= r1yo[r1xstart:r1xendoff]
     r2yo=r2yo[r2xstart:r2xendoff]
-    print('Interpolated the x values.', len(r1yo), len(r2yo), '. done!')
+    print('Interpolated the x values.', len(r1yo), len(r2yo), '. Done!')
     return r1yo, r2yo, rxo
 
 
@@ -238,6 +234,7 @@ listoffilesr2=[]
 meancurrentlist=[]
 totalcoulomblist=[]
 timelist =[]
+avgr1r2list=[]
 for each in range(len(r1files)):
     r1file = os.path.basename(r1files[each])
     r2file = os.path.basename(r2files[each])
@@ -255,7 +252,6 @@ for each in range(len(r1files)):
     currentr2=[]
     currenthigh=[]
     timehigh=[]
-    avgr1r2list=[]
     rxa = rx+[max(rx)]
     for eachh, r1val in enumerate(r1):
         if r2[eachh] == 0:
