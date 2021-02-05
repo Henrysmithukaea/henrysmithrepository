@@ -1,5 +1,4 @@
-
-from reportlab.lib.utils import ImageReader
+# from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen.canvas import Canvas
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase.pdfmetrics import registerFont
@@ -29,7 +28,7 @@ colours = ("Yellow", "Green", "Blue", "Red", "Orange", "lightgreen", "navy", "Te
 
 #defines
 filefolder = 'N:/CCFE/H3AT/TritiumScience/TSG Members/Ant/TRiCEM/AWE/Data/' #write the filepath
-filepath = ''.join([filefolder,'**\*']) # ** is a "wildcard", so it goes through every folder in the sciencerun3-d2 directory 
+filepath = ''.join([filefolder,'T098_3\*']) # ** is a "wildcard", so it goes through every folder in the sciencerun3-d2 directory 
 outputfolder = 'N:\CCFE\H3AT\TritiumScience\TSG Members\Ant\TRiCEM\AWE\Data\output'
 
 smoothfactor =3 # smoothing factor for any averaging we do on the graph (there's none atm)
@@ -185,7 +184,7 @@ def interpolate(r1x,r1y,r2x,r2y,searchrange):
     rxo = sorted(r1x[r1xstart:r1xend] + r2x[r2xstart:r2xend]) # this is the time step for both r1 and r2 combined
     r1yo= r1yo[r1xstart:r1xendoff]
     r2yo=r2yo[r2xstart:r2xendoff]
-    print('Interpolated the x values. done!')
+    print('Interpolated the x values.', len(r1yo), len(r2yo), '. done!')
     return r1yo, r2yo, rxo
 
 
@@ -212,6 +211,8 @@ def loadfilesmatching(namelist): # loads files and returns a list of them ordere
 
     
 # The Actual Script
+
+daqfiles = [0]
 
 ###diode
 diodefiles = loadfilesmatching([diodefilename])
@@ -255,16 +256,17 @@ for each in range(len(r1files)):
     currenthigh=[]
     timehigh=[]
     avgr1r2list=[]
-    for eachh in range(len(rx)):
+    rxa = rx+[max(rx)]
+    for eachh, r1val in enumerate(r1):
         if r2[eachh] == 0:
             r1overr2.append(0) # if it can't actually divide by r2, adds 0 instead.
         else:
-            r1overr2.append(r1[eachh]/r2[eachh])
-        current.append(r1[eachh]/resistorohms)
+            r1overr2.append(r1val/r2[eachh])
+        current.append(r1val/resistorohms)
         currentr2.append(r2[eachh]/resistorohms)
-        if r1[eachh]>=r1highval:
-            timeval = rx[eachh+1]-rx[eachh]
-            currenthigh.append(r1[eachh]*timeval)
+        if r1val>=r1highval:
+            timeval = rxa[eachh+1]-rx[eachh]
+            currenthigh.append(r1val*timeval)
             timehigh.append(timeval)
     timelist.append(sum(timehigh))
     totalcoulombs=(sum(currenthigh)*sampleareacm2)/(resistorohms*r1areacm2)
@@ -291,8 +293,8 @@ if listoffilesr1!=listoffilesr2:
 if not len(daqfiles) == len(listoffilesr1) == len(diodefiles):
     print ('the number of files found for each folder don\'t appear to match. R1:', len(listoffilesr1), 'diodefiles:', len(diodefiles), 'daqfiles:', len(daqfiles) )
 
-strtitle = ''.join(['write a title for the file', r1files[each], ', including sample no. and material. E.g S87, Eurofer'])
 for each, file in enumerate(listoffilesr1):
+    strtitle = ''.join(['write a title for the file', r1files[each], ', including sample no. and material. E.g S87, Eurofer'])
     title=input(strtitle)
     strsubtitle = ''.join(['write subtitle for file', r1files[each], '. You may want to include the data on magnetron, anode, extractor, treatment temp. \nE.g 0.0 DPA, 5 hours, 40mA magnetron, 400V anode, -200V extractor, room temperature. \n You can copy paste this from Tricem\Documents\ElectronicLogs\ on the n drive'])
     filepath = ''.join([outputfolder, '/', file, '*' ])
@@ -312,38 +314,3 @@ for each, file in enumerate(listoffilesr1):
     dopdf(canv, listoffiles, stra, strb, strc, title)
 print ('"My work here is done." The python removes its sunglasses, revealing a pair of slightly smaller sunglasses, and exits the room.')
 
-                       
-                               
-# Unused defines
-noisebound = 10 # if the absolute value is less than the noise boundary, the data point is treated as noise
-
-def findlowerboundofcurve(enumerateddata):
-    #meancurrentlist[each]*(areacm2list[each]/r1areacm2)
-    for each in enumerateddata:
-        if (abs(enumerateddata[each])>=noisebound):
-            if (each-previous)<10:
-                lb.append(each)
-                previous = each
-                if len(lb)>5:
-                    print (lb)
-                    return lb
-                    break
-            else:
-                sv=[each]
-                previous = each
-                
-def findupperboundofcurve(enumerateddata, lowerstart):  
-    for each in enumerateddata[lowerstart:]:
-        if abs(enumerateddata[each])<=noisebound:
-            if (each-previous)<10:
-                ub.append(each)
-                previous = each
-                if len(ub)>5:
-                    print (ub)
-                    return ub
-                    break
-            else:
-                ub=[each]
-                previous = each
-                
-            
