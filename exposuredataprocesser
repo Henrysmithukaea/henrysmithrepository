@@ -32,7 +32,7 @@ r2filenames = ["R2*.csv", "record*2*.csv"]
 rXcolumn =0 # used for interpolation
 rYcolumn =1 # used for interpolation
 rheaderrow = 0
-resistorohms = 3.7
+resistorohms = 1
 r1highval = 0.0001
 
 searchrange = 5 # range of data that r interpolation will search. Set to about 2000000 to search from the start each time
@@ -264,6 +264,8 @@ for each in range(len(r1files)):
     r2y = datavaluesii[rYcolumn]
     r2x = formattoseconds(datavaluesii[rXcolumn])
     (r1, r2, rx) = interpolate(r1x,r1y,r2x,r2y, searchrange)
+    firstval = rx[0]
+    rx = [i-firstval for i in rx]
     r1overr2=[]
     current=[]
     currentr2=[]
