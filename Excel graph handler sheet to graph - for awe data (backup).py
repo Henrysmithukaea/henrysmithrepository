@@ -11,7 +11,8 @@ import glob
 from pathlib import Path
 
 #defines
-filepath = 'C:/Users/hsmith/Anaconda/Anaconda script files\*' #write the filepath, and at the end, include '*' - can't end in a \
+filepath = 'N:/CCFE/H3AT/TritiumScience/TSG Members/Ant/TRiCEM/AWE/Data/*' #write the filepath, and at the end, include '*' - can't end in a \. Use forward slashes / rather than the default backslash
+outputfolder = 'N:\CCFE\H3AT\TritiumScience\TSG Members\Ant\TRiCEM\AWE\Data\output'
 Xdatacolumn = 1 			#only column in each sheet of the doc that contains the x data
 Ydatacolumns = [3,4,5,6,7,8,9,10] 	#all columns in each sheet of the doc that contain Y data
 Ymultiplotcolumn = [11]
@@ -24,7 +25,7 @@ colours = ("Yellow", "Green", "Blue", "Red", "Orange", "Purple", "Black", "Teal"
            "rosybrown", "salmon", "darkgoldenrod", "lightseagreen", "darkolivegreen", "saddlebrown", "cornflowerblue",
           "fuchsia", "grey", "darkslategray", "navy", "royalblue", "lightgreen", "mediumseagreen") #will cycle through this index colouring each new graph in a new colour
 ignored_sheets = 2			#the number of sheets in the spreadsheet you don't want processed. All of these have to be reordered to appear at the end of the list of sheets. 
-specific_sheets = [0,3,4,5,6,7,8,9,10,11,12] # the sheets you want included in your comparison plt
+specific_sheets = [1,2,3,4,5,6,7,8,9,10,11,12,13] # the sheets you want included in your comparison plt
 
 #Command defines
 
@@ -51,7 +52,8 @@ def plotandsave(titlestring,ystring,yv):
     plt.ylabel(ystring) 			#defines labels for your graph. "D flux (N m⁻²s⁻ˡ)"
     plt.rcParams.update({"savefig.facecolor":  ('white'),"figure.figsize": (14, 8)})  			#big nice pngs
     plt.yscale("log") 				#logarithmic axis
-    plt.savefig(titlestring, bbox_inches='tight') #this will throw a bunch of .png files into the folder specified in filepath, overwriting anything with the same name.
+    savestring = '/'.join([outputfolder, titlestring])
+    plt.savefig(savestring, bbox_inches='tight') #this will throw a bunch of .png files into the folder specified in filepath, overwriting anything with the same name.
     plt.show()				#shows you the graph that was saved
 
 def plotandsavelin(titlestring,ystring,yv):
@@ -79,11 +81,13 @@ for each in xlsx_files:
     listofsheetnames = list(alldata.keys())
     sheetcount = len(listofsheetnames) - ignored_sheets
     print ('Began reading', i, 'and found', sheetcount, 'sheets in this document.', listofsheetnames)
-    for sheetno in range (sheetcount):
+    for sheetno in specific_sheets:
         print ('reading sheet', listofsheetnames[sheetno])
         x = getcontentx(i,sheetno,Xdatacolumn)
         legendvalues = plotYandreturnlegendvalues(i,sheetno,Ydatacolumns)
-        plt.legend(legendvalues, bbox_to_anchor=(1, 1)) #Formats legend. for some reason there's no setting to alter line width of legend outside of making it fully custom. is dumb.
+        leg = plt.legend(legendvalues, bbox_to_anchor=(1, 1)) 
+        for line in leg.get_lines(): #Formats legend to use a wider linewidth. Thank you Adam
+            line.set_linewidth(6.0)       
         titlestring = '.'.join([each[(len(filepath)-1):-5],listofsheetnames[sheetno],"png"]) # makes a string for the title of graphs and for saving the files as a svg. To make png instead, change svg to png.
         plotandsave(titlestring,"Count",5)
     for sheetno in specific_sheets:
