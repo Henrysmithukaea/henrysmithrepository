@@ -1,5 +1,53 @@
 
-# henry.smith@ukaea.uk
+# henry.smith@ukaea.uk. Version 0.1.0
+
+##### READ ME #####
+# This is a python script - some text, that can be copied and pasted into a python terminal.
+# It does the following:
+# - Reads an excel spreadsheet, formatted 
+# - creates an overlaid plot of several columns of data
+# - 
+# The python terminal interprets the python script as a list of instructions. For example, I could write:
+##### print ('hello world') 
+# The python terminal would interpret this as an instruction to write the phrase 'hello world'
+# Alternately, we can "define" a particular variable as 'hello world', and then ask for that variable to be printed.
+# For example:
+##### horse = 'hello world'
+##### print (horse)
+# This would also make the python terminal write the phrase 'hello world'. 
+
+
+# Below is a customisable list of "defines". In order to use this script, there are two defines that must be changed
+
+# Please change this define to the filepath that contains the excel spreadsheet(s). At the end, include '/*' to search for all spreadsheets in that folder, or you can write its name 
+filepath = 'N:\CCFE\H3AT\TritiumScience\TSG Members\Ant\TRiCEM\AWE\Data/*'
+
+
+# Please define 'outputfolder' as any folder where you'd like to save the .pngs that this script generates.
+outputfolder = 'N:\CCFE\H3AT\TritiumScience\TSG Members\Ant\TRiCEM\AWE\Data\output'
+
+# Ordinarily, you will not need to make any further changes.
+# There are further defines below. 
+
+# Defines that are standardised by Yevhen and should not require any further updates
+
+specific_sheets = [1,2,3,4,5,6,7,8,9,10,11,12,13] # the sheets you would like to process and include in your comparison plot
+Xdatacolumn = 1 			#The column in each sheet of the doc that contains the x data
+Ydatacolumns = [3,4,5,6,7,8,9,10] 	#all columns in each sheet of the doc that contain Y data
+header_row = 2 				#This defines the row that is expected to contain the column titles
+histrow = 27 # the row containing data for the histogram in each sheet.Default 27
+histcol = [14] # the column containing data for the histogram in each sheet.Default 14
+smoothfactor =50 #window size for the rolling window average we take
+colours = ("Yellow", "Green", "Blue", "Red", "Orange", "Purple", "Black", "Teal",
+           "rosybrown", "salmon", "darkgoldenrod", "lightseagreen", "darkolivegreen", "saddlebrown", "cornflowerblue",
+          "fuchsia", "grey", "darkslategray", "navy", "royalblue", "lightgreen", "mediumseagreen") # The script will cycle through this index colouring each new graph in a new colour
+ignored_sheets = 2			#the number of sheets in the spreadsheet you don't want processed. All of these have to be reordered to appear at the end of the list of sheets. 
+
+Ymultiplotcolumn = [11] #The column that you will use for the logarithmic comparison plot.
+xinterceptofmultiplot = 100000000000000 # This is the X intercept of the logarithmic comparison plot.
+
+
+# Import
 
 
 import pandas as pd
@@ -10,24 +58,10 @@ import matplotlib.patches as patches
 import glob
 from pathlib import Path
 
-#defines
-filepath = 'N:/CCFE/H3AT/TritiumScience/TSG Members/Ant/TRiCEM/AWE/Data/*' #write the filepath, and at the end, include '*' - can't end in a \. Use forward slashes / rather than the default backslash
-outputfolder = 'N:\CCFE\H3AT\TritiumScience\TSG Members\Ant\TRiCEM\AWE\Data\output'
-Xdatacolumn = 1 			#only column in each sheet of the doc that contains the x data
-Ydatacolumns = [3,4,5,6,7,8,9,10] 	#all columns in each sheet of the doc that contain Y data
-Ymultiplotcolumn = [11]
-header_row = 2 				#row of the header (i.e the column titles)
-header_row_csv=2
-histrow = 27
-histcol = [14]
-smoothfactor =50 #window size for the rolling window average we take
-colours = ("Yellow", "Green", "Blue", "Red", "Orange", "Purple", "Black", "Teal",
-           "rosybrown", "salmon", "darkgoldenrod", "lightseagreen", "darkolivegreen", "saddlebrown", "cornflowerblue",
-          "fuchsia", "grey", "darkslategray", "navy", "royalblue", "lightgreen", "mediumseagreen") #will cycle through this index colouring each new graph in a new colour
-ignored_sheets = 2			#the number of sheets in the spreadsheet you don't want processed. All of these have to be reordered to appear at the end of the list of sheets. 
-specific_sheets = [1,2,3,4,5,6,7,8,9,10,11,12,13] # the sheets you want included in your comparison plt
 
-#Command defines
+#Command defines. These can be modified if you wish to change the formatting of graphs
+
+header_row_csv=2
 
 def getcontentx(i, sname, colno):
     data = pd.read_excel(i, sheet_name = sname, usecols = [colno], header = header_row)
@@ -46,25 +80,17 @@ def plotYandreturnlegendvalues(i, sname, colnos):
         plt.plot(x, y, color =colours[column], linewidth = 1.5, alpha = 0.7) #  There's a lot of options here, e.g 'o' means it plots as dots. you may want to add 'color =colours[each], ' - this will then use the colours specified in defines
     return legendvalues 
 
-def plotandsave(titlestring,ystring,yv):
+def plotandsave(titlestring,ystring,yv,linearity):
     plt.title(titlestring)
     plt.axis(ymin=yv)
     plt.ylabel(ystring) 			#defines labels for your graph. "D flux (N m⁻²s⁻ˡ)"
     plt.rcParams.update({"savefig.facecolor":  ('white'),"figure.figsize": (14, 8)})  			#big nice pngs
-    plt.yscale("log") 				#logarithmic axis
+    if linearity:
+        plt.yscale("log") 				#If Log is set to true, it plots on a logarithmic axis.
     savestring = '/'.join([outputfolder, titlestring])
     plt.savefig(savestring, bbox_inches='tight') #this will throw a bunch of .png files into the folder specified in filepath, overwriting anything with the same name.
     plt.show()				#shows you the graph that was saved
 
-def plotandsavelin(titlestring,ystring,yv):
-    plt.title(titlestring)
-    plt.axis(ymin=yv)
-    plt.ylabel(ystring) 			#defines labels for your graph. "D flux (N m⁻²s⁻ˡ)"
-    plt.rcParams.update({"savefig.facecolor":  ('white'),"figure.figsize": (14, 18)})  			#big nice pngs
-    plt.savefig(titlestring, bbox_inches='tight') #this will throw a bunch of .png files into the folder specified in filepath, overwriting anything with the same name.
-    plt.show()				#shows you the graph that was saved
-
-    
 #Script
 legendvalues =[]
 xlsx_filepath = ''.join([filepath, ".xlsx"])
@@ -79,8 +105,8 @@ for each in xlsx_files:
     histopoint = []
     alldata = pd.read_excel(i, sheet_name=None)
     listofsheetnames = list(alldata.keys())
-    sheetcount = len(listofsheetnames) - ignored_sheets
-    print ('Began reading', i, 'and found', sheetcount, 'sheets in this document.', listofsheetnames)
+    sheetcount = len(listofsheetnames[Ydatacolumns])
+    print ('Began reading', i, 'and found', sheetcount, 'sheets in this document.', listofsheetnames[Ydatacolumns])
     for sheetno in specific_sheets:
         print ('reading sheet', listofsheetnames[sheetno])
         x = getcontentx(i,sheetno,Xdatacolumn)
@@ -89,7 +115,7 @@ for each in xlsx_files:
         for line in leg.get_lines(): #Formats legend to use a wider linewidth. Thank you Adam
             line.set_linewidth(6.0)       
         titlestring = '.'.join([each[(len(filepath)-1):-5],listofsheetnames[sheetno],"png"]) # makes a string for the title of graphs and for saving the files as a svg. To make png instead, change svg to png.
-        plotandsave(titlestring,"Count",5)
+        plotandsave(titlestring,"Count",5,True)
     for sheetno in specific_sheets:
         print ('reading sheet', listofsheetnames[sheetno])
         hst = pd.read_excel(i, sheet_name = sheetno, usecols = histcol, header = header_row)
@@ -101,9 +127,9 @@ for each in xlsx_files:
         plt.plot(x, y, color = colours[sheetno], linewidth = 1.5, alpha = 0.7)
     legendvalues= (list(listofsheetnames[x] for x in specific_sheets))
     plt.legend(legendvalues, bbox_to_anchor=(1, 1)) 
-    plotandsave("Log comparison of D release over time for each sample","total D atoms per m²s",100000000000000)
+    plotandsave("Log comparison of D release over time for each sample","total D atoms per m²s", xinterceptlogcomparison, True)
     plt.bar(legendvalues, histopoint,color = (list(colours[x] for x in specific_sheets)), alpha = 0.7) 
-    plotandsavelin('Comparison of total D release for each sample',"total D atoms per cm² e17",0)
+    plotandsave('Comparison of total D release for each sample',"total D atoms per cm² e17",0, False)
     
         
 for i in csv_files:
@@ -119,6 +145,6 @@ for i in csv_files:
     plt.xlabel(datalabels[Xdatacolumn])
     plt.legend(datalabels[Ydatacolumns], bbox_to_anchor=(1, 1))
     titlestring = '.'.join([i[len(filepath):-4],"svg"])
-    plotandsave(titlestring,"count",5)
+    plotandsave(titlestring,"count",5, True)
          
 print ('"My work here is done." The python executable revs a big motorcycle and drives away in a cloud of smoke. It lights a cigarette, and gazes wistfully back at you, tears forming in its eyes')
