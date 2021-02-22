@@ -1,12 +1,14 @@
 
 # henry.smith@ukaea.uk. Version 0.1.0
 
-##### READ ME #####
-# This is a python script - some text, that can be copied and pasted into a python terminal.
+                                           ##### READ ME #####
+
+# This is a python script - some text that can be copied and pasted into a python terminal.
 # It does the following:
-# - Reads an excel spreadsheet, formatted 
-# - creates an overlaid plot of several columns of data
-# - 
+# - Reads each sheet of an excel spreadsheet. For each sheet you choose, it makes an overlaid plot of the data in that sheet
+# - Takes one data point from each sheet in the spreadsheet and overlays them all in a histogram.
+# - Takes one column from each sheet in the spreadsheet and overlays them all in one final plot.
+
 # The python terminal interprets the python script as a list of instructions. For example, I could write:
 ##### print ('hello world') 
 # The python terminal would interpret this as an instruction to write the phrase 'hello world'
@@ -19,12 +21,14 @@
 
 # Below is a customisable list of "defines". In order to use this script, there are two defines that must be changed
 
-# Please change this define to the filepath that contains the excel spreadsheet(s). At the end, include '/*' to search for all spreadsheets in that folder, or you can write its name 
+# Please define 'filepath' as the filepath containing your excel spreadsheet(s). At the end, include '/*' to search for all spreadsheets in that folder, or you can write its name 
 filepath = 'N:\CCFE\H3AT\TritiumScience\TSG Members\Ant\TRiCEM\AWE\Data/*'
-
 
 # Please define 'outputfolder' as any folder where you'd like to save the .pngs that this script generates.
 outputfolder = 'N:\CCFE\H3AT\TritiumScience\TSG Members\Ant\TRiCEM\AWE\Data\output'
+
+# Please define 'specific_sheets' as a list of numbers (or sheet names) containing x data.
+specific_sheets = [1,2,3,4,5,6,7,8,9,10,11,12,13]
 
 # Ordinarily, you will not need to make any further changes.
 # There are further defines below. 
