@@ -22,20 +22,20 @@
 # Below is a customisable list of "defines". In order to use this script, there are two defines that must be changed
 
 # Please define 'filepath' as the filepath containing your excel spreadsheet(s). At the end, include '/*' to search for all spreadsheets in that folder, or write its name. 
-filepath = 'N:\CCFE\H3AT\TritiumScience\Tritium Research\Tricem\Data\Science\Analysis/_AWE_*'
+filepath = 'N:\CCFE\H3AT\TritiumScience\Tritium Research\Tricem\Data\Science\Analysis/Mass*'
 
 # Please define 'outputfolder' as the folder, where you'd like to save the .pngs that this script generates.
-outputfolder = 'N:\CCFE\H3AT\TritiumScience\Tritium Research\Tricem\Data\Science\Analysis\ScienceRun3-D2\Output'
+outputfolder = 'N:\CCFE\H3AT\TritiumScience\Tritium Research\Tricem\Data\Science\Analysis\output'
 
 # Please define 'specific_sheets' as the list of numbers (or sheet names) containing your data in each spreadsheet, in squared brackets, separated by commas.
-specific_sheets = [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]
+specific_sheets = [3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
 
 # Ordinarily, you will not need to make any further changes.
 # There are further defines below. 
 
 # Defines that are standardised by Yevhen and should not require any further updates
-
-datacolumn = 1 			#The column in each sheet of the doc that contains the x data
+graphtitle = 'Mass spectrometer signal for desorbed species of various masses\nagainst temperature with a ramp rate of 10K min⁻ˡ for sample'
+Xdatacolumn = 1 			#The column in each sheet of the doc that contains the x data
 Ydatacolumns = [3,4,5,6,7,8,9,10] 	#all columns in each sheet of the doc that contain Y data
 header_row = 2 				#This defines the row that is expected to contain the column titles
 histrow = 27 # the row containing data for the histogram in each sheet.Default 27
@@ -90,7 +90,7 @@ def plotandsave(titlestring,ystring,yv,linearity):
     plt.rcParams.update({"savefig.facecolor":  ('white'),"figure.figsize": (14, 8)})  			#big nice pngs
     if linearity:
         plt.yscale("log") 				#If Log is set to true, it plots on a logarithmic axis.
-    savestring = '/'.join([outputfolder, titlestring])
+    savestring = ''.join([outputfolder, "/", listofsheetnames[sheetno], ".png"])
     plt.savefig(savestring, bbox_inches='tight') #this will throw a bunch of .png files into the folder specified in filepath, overwriting anything with the same name.
     plt.show()				#shows you the graph that was saved
 
@@ -118,7 +118,7 @@ for each in xlsx_files:
         leg = plt.legend(legendvalues, bbox_to_anchor=(1, 1)) 
         for line in leg.get_lines(): #Formats legend to use a wider linewidth. Thank you Adam
             line.set_linewidth(6.0)       
-        titlestring = '.'.join([each[(len(filepath)-1):-5],listofsheetnames[sheetno],"png"]) # makes a string for the title of graphs and for saving the files as a svg. To make png instead, change svg to png.
+        titlestring = '.'.join([graphtitle,listofsheetnames[sheetno],"png"]) # makes a string for the title of graphs and for saving the files as a svg. To make png instead, change svg to png.
         plotandsave(titlestring,"Count",5,True)
     for sheetno in specific_sheets:
         print ('reading sheet', listofsheetnames[sheetno])
