@@ -130,7 +130,9 @@ for each in xlsx_files:
         x = getcontentx(i,sheetno,Xdatacolumn)
         plt.plot(x, y, color = colours[sheetno], linewidth = 1.5, alpha = 0.7)
     legendvalues= (list(listofsheetnames[x] for x in specific_sheets))
-    plt.legend(legendvalues, bbox_to_anchor=(1, 1)) 
+    leg = plt.legend(legendvalues, bbox_to_anchor=(1, 1)) 
+    for line in leg.get_lines(): #Formats legend to use a wider linewidth. Thank you Adam
+        line.set_linewidth(6.0) 
     plotandsave("Log comparison of D release over time for each sample","total D atoms per m²s", xinterceptofmultiplot, True)
     plt.bar(legendvalues, histopoint,color = (list(colours[x] for x in specific_sheets)), alpha = 0.7) 
     plotandsave('Comparison of total D release for each sample',"total D atoms per cm² e17",0, False)
@@ -147,7 +149,9 @@ for i in csv_files:
         y = pd.Series(datavalues[each]).rolling(window=smoothfactor).mean()
         plt.plot(x, y, color =colours[each], linewidth = 1.5, alpha = 0.7)
     plt.xlabel(datalabels[Xdatacolumn])
-    plt.legend(datalabels[Ydatacolumns], bbox_to_anchor=(1, 1))
+    leg = plt.legend(legendvalues, bbox_to_anchor=(1, 1)) 
+    for line in leg.get_lines(): #Forplt.legend(datalabels[Ydatacolumns], bbox_to_anchor=(1, 1))mats legend to use a wider linewidth. Thank you Adam
+        line.set_linewidth(6.0) 
     titlestring = '.'.join([i[len(filepath):-4],"svg"])
     plotandsave(titlestring,"count",5, True)
 
