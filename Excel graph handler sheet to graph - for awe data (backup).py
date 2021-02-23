@@ -90,7 +90,7 @@ def plotandsave(titlestring,ystring,yv,linearity):
     plt.rcParams.update({"savefig.facecolor":  ('white'),"figure.figsize": (14, 8)})  			#big nice pngs
     if linearity:
         plt.yscale("log") 				#If Log is set to true, it plots on a logarithmic axis.
-    savestring = ''.join([outputfolder, "/", listofsheetnames[sheetno], ".png"])
+    savestring = ''.join([outputfolder, "/", titlestring[-7:], ' ', ystring, '.png'])
     plt.savefig(savestring, bbox_inches='tight') #this will throw a bunch of .png files into the folder specified in filepath, overwriting anything with the same name.
     plt.show()				#shows you the graph that was saved
 
@@ -118,7 +118,7 @@ for each in xlsx_files:
         leg = plt.legend(legendvalues, bbox_to_anchor=(1, 1)) 
         for line in leg.get_lines(): #Formats legend to use a wider linewidth. Thank you Adam
             line.set_linewidth(6.0)       
-        titlestring = '.'.join([graphtitle,listofsheetnames[sheetno],"png"]) # makes a string for the title of graphs and for saving the files as a svg. To make png instead, change svg to png.
+        titlestring = '.'.join([graphtitle,listofsheetnames[sheetno]]) # makes a string for the title of graphs and for saving the files as a svg. To make png instead, change svg to png.
         plotandsave(titlestring,"Count",5,True)
     for sheetno in specific_sheets:
         print ('reading sheet', listofsheetnames[sheetno])
