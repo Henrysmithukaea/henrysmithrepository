@@ -1,4 +1,4 @@
-# henry.smith@ukaea.uk. Version 0.1.1
+# henry.smith@ukaea.uk. Version 0.1.2
 
                                            ##### READ ME #####
 
@@ -25,10 +25,10 @@
 filepath = 'N:\CCFE\H3AT\TritiumScience\Tritium Research\Tricem\Data\Science\Analysis/Mass*'
 
 # Please define 'outputfolder' as the folder, where you'd like to save the .pngs that this script generates.
-outputfolder = 'N:\CCFE\H3AT\TritiumScience\Tritium Research\Tricem\Data\Science\Analysis\output'
+outputfolder = 'N:\CCFE\H3AT\TritiumScience\Tritium Research\Tricem\Data\Science\Analysis\output2'
 
 # Please define 'specific_sheets' as the list of numbers (or sheet names) containing your data in each spreadsheet, in squared brackets, separated by commas.
-specific_sheets = [3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+specific_sheets = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22]
 
 # Ordinarily, you will not need to make any further changes.
 # There are further defines below. 
@@ -41,9 +41,9 @@ header_row = 2 				#This defines the row that is expected to contain the column 
 histrow = 27 # the row containing data for the histogram in each sheet.Default 27
 histcol = [14] # the column containing data for the histogram in each sheet.Default 14
 smoothfactor =50 #window size for the rolling window average we take
-colours = ("Yellow", "Green", "Blue", "Red", "Orange", "Purple", "Black", "Teal",
-           "rosybrown", "salmon", "darkgoldenrod", "lightseagreen", "darkolivegreen", "saddlebrown", "cornflowerblue",
-          "fuchsia", "grey", "darkslategray", "navy", "royalblue", "lightgreen", "mediumseagreen") # The script will cycle through this index colouring each new graph in a new colour
+colours = ("navy", "lime", "darkgreen", "lightseagreen", "mediumseagreen", "chartreuse", "Red", "Orange", "Purple", "Black", "Teal",
+           "rosybrown", "salmon", "darkgoldenrod",  "darkolivegreen", "saddlebrown", "cornflowerblue",
+          "fuchsia", "grey", "darkslategray", "peachpuff", "royalblue", "Blue",  "lightgray", "darkgray", "plum", "gray") # The script will cycle through this index colouring each new graph in a new colour
 ignored_sheets = 2			#the number of sheets in the spreadsheet you don't want processed. All of these have to be reordered to appear at the end of the list of sheets. 
 
 Ymultiplotcolumn = [11] #The column that you will use for the logarithmic comparison plot.
@@ -90,7 +90,8 @@ def plotandsave(titlestring,ystring,yv,linearity):
     plt.rcParams.update({"savefig.facecolor":  ('white'),"figure.figsize": (14, 8)})  			#big nice pngs
     if linearity:
         plt.yscale("log") 				#If Log is set to true, it plots on a logarithmic axis.
-    savestring = ''.join([outputfolder, "/", titlestring[-7:], ' ', ystring, '.png'])
+    subtitle=input('write a title for the graph, e.g "All", or "Mo samples". This is written alongside y axis and graph title when the graph is saved. It can be blank!')
+    savestring = ''.join([outputfolder, "/", subtitle,  titlestring[-7:], ' ', ystring, '.png'])
     plt.savefig(savestring, bbox_inches='tight') #this will throw a bunch of .png files into the folder specified in filepath, overwriting anything with the same name.
     plt.show()				#shows you the graph that was saved
 
@@ -111,15 +112,19 @@ for each in xlsx_files:
     sheetcount = len(listofsheetnames)
     sheetdisplay = [listofsheetnames[each] for each in Ydatacolumns]
     print ('Began reading', i, 'and found these sheets in this document:', sheetdisplay)
-    for sheetno in specific_sheets:
-        print ('reading sheet', listofsheetnames[sheetno])
-        x = getcontentx(i,sheetno,Xdatacolumn)
-        legendvalues = plotYandreturnlegendvalues(i,sheetno,Ydatacolumns)
-        leg = plt.legend(legendvalues, bbox_to_anchor=(1, 1)) 
-        for line in leg.get_lines(): #Formats legend to use a wider linewidth. Thank you Adam
-            line.set_linewidth(6.0)       
-        titlestring = '.'.join([graphtitle,listofsheetnames[sheetno]]) # makes a string for the title of graphs and for saving the files as a svg. To make png instead, change svg to png.
-        plotandsave(titlestring,"Count",5,True)
+    if len(specific_sheets) > len(colours):
+        print ("please add more colours in the define section. There are currently too few colours for this number of data points.")
+    var = input("Output graphs of each sheet? (y/enter or n)")
+    if var == 'y' or var == 'Y' or var == '':
+        for sheetno in specific_sheets:
+            print ('reading sheet', listofsheetnames[sheetno])
+            x = getcontentx(i,sheetno,Xdatacolumn)
+            legendvalues = plotYandreturnlegendvalues(i,sheetno,Ydatacolumns)
+            leg = plt.legend(legendvalues, bbox_to_anchor=(1, 1)) 
+            for line in leg.get_lines(): #Formats legend to use a wider linewidth. Thank you Adam
+              line.set_linewidth(6.0)       
+            titlestring = '.'.join([graphtitle,listofsheetnames[sheetno]]) # makes a string for the title of graphs and for saving the files as a svg. To make png instead, change svg to png.
+            plotandsave(titlestring,"Count",5,True)
     for sheetno in specific_sheets:
         print ('reading sheet', listofsheetnames[sheetno])
         hst = pd.read_excel(i, sheet_name = sheetno, usecols = histcol, header = header_row)
