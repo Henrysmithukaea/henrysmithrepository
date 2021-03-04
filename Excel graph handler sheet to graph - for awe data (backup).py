@@ -28,7 +28,7 @@ filepath = 'N:\CCFE\H3AT\TritiumScience\Tritium Research\Tricem\Data\Science\Ana
 outputfolder = 'N:\CCFE\H3AT\TritiumScience\Tritium Research\Tricem\Data\Science\Analysis\output2'
 
 # Please define 'specific_sheets' as the list of numbers (or sheet names) containing your data in each spreadsheet, in squared brackets, separated by commas.
-specific_sheets = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22]
+specific_sheets = [0,1,2,3,4,5,6,7,9,10,11,12,13,14,15,16,17,18,19,20,21,22]
 
 # Ordinarily, you will not need to make any further changes.
 # There are further defines below. 
@@ -48,7 +48,7 @@ ignored_sheets = 2			#the number of sheets in the spreadsheet you don't want pro
 
 Ymultiplotcolumn = [11] #The column that you will use for the logarithmic comparison plot.
 xinterceptofmultiplot = 100000000000000 # This is the X intercept of the logarithmic comparison plot.
-
+xcutoff = 800
 
 # Import
 
@@ -83,13 +83,15 @@ def plotYandreturnlegendvalues(i, sname, colnos):
         plt.plot(x, y, color =colours[column], linewidth = 1.5, alpha = 0.7) #  There's a lot of options here, e.g 'o' means it plots as dots. you may want to add 'color =colours[each], ' - this will then use the colours specified in defines
     return legendvalues 
 
-def plotandsave(titlestring,ystring,yv,linearity):
+def plotandsave(titlestring,ystring,yv,xv,linearity):
     plt.title(titlestring)
     plt.axis(ymin=yv)
     plt.ylabel(ystring) 			#defines labels for your graph. "D flux (N m⁻²s⁻ˡ)"
     plt.rcParams.update({"savefig.facecolor":  ('white'),"figure.figsize": (14, 8)})  			#big nice pngs
     if linearity:
         plt.yscale("log") 				#If Log is set to true, it plots on a logarithmic axis.
+    if xv:
+        plt.axis(xmax=xv)
     subtitle=input('write a title for the graph, e.g "All", or "Mo samples". This is written alongside y axis and graph title when the graph is saved. It can be blank!')
     savestring = ''.join([outputfolder, "/", subtitle,  titlestring[-7:], ' ', ystring, '.png'])
     plt.savefig(savestring, bbox_inches='tight') #this will throw a bunch of .png files into the folder specified in filepath, overwriting anything with the same name.
@@ -122,9 +124,9 @@ for each in xlsx_files:
             legendvalues = plotYandreturnlegendvalues(i,sheetno,Ydatacolumns)
             leg = plt.legend(legendvalues, bbox_to_anchor=(1, 1)) 
             for line in leg.get_lines(): #Formats legend to use a wider linewidth. Thank you Adam
-              line.set_linewidth(6.0)       
+                line.set_linewidth(6.0)       
             titlestring = '.'.join([graphtitle,listofsheetnames[sheetno]]) # makes a string for the title of graphs and for saving the files as a svg. To make png instead, change svg to png.
-            plotandsave(titlestring,"Count",5,True)
+            plotandsave(titlestring,"Count",5,False,True)
     for sheetno in specific_sheets:
         print ('reading sheet', listofsheetnames[sheetno])
         hst = pd.read_excel(i, sheet_name = sheetno, usecols = histcol, header = header_row)
@@ -135,12 +137,17 @@ for each in xlsx_files:
         x = getcontentx(i,sheetno,Xdatacolumn)
         plt.plot(x, y, color = colours[sheetno], linewidth = 1.5, alpha = 0.7)
     legendvalues= (list(listofsheetnames[x] for x in specific_sheets))
-    leg = plt.legend(legendvalues, bbox_to_anchor=(1, 1)) 
+    leg = plt.legend(legendvalues,bbox_to_anchor= (1.1, 0.65), ncol=2,)  #for some reason the legend is not anchoring correctly
     for line in leg.get_lines(): #Formats legend to use a wider linewidth. Thank you Adam
         line.set_linewidth(6.0) 
-    plotandsave("Log comparison of D release over time for each sample","total D atoms per m²s", xinterceptofmultiplot, True)
-    plt.bar(legendvalues, histopoint,color = (list(colours[x] for x in specific_sheets)), alpha = 0.7) 
-    plotandsave('Comparison of total D release for each sample',"total D atoms per cm² e17",0, False)
+    plotandsave("Log comparison of D release over time for each sample","total D atoms per m²s", xinterceptofmultiplot,xcutoff, True)
+    plt.bar(range(len(specific_sheets)), histopoint, color = (list(colours[x] for x in specific_sheets)), alpha = 0.7) 
+    if len(specific_sheets)>=20:
+        plt.xticks(range(len(specific_sheets)), legendvalues, rotation='vertical')
+    else
+        plt.xticks(range(len(specific_sheets)), legendvalues)
+    plt.subplots_adjust(bottom=0.15)
+    plotandsave('Comparison of total D release for each sample',"total D atoms per cm² e21",0, False, False)
     
         
 for i in csv_files:
