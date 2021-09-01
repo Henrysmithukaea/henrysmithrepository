@@ -1,0 +1,401 @@
+##### henry.smith@ukaea.uk 
+## Version 1.0.3
+
+                                           ##### READ ME #####
+
+# This is a python script - some text that can be copied and pasted into a python terminal.
+# You can install a python
+
+
+# This python script does the following:
+# - Reads each subfolder in a folder, searching for files whose names match certain criteria.
+# - outputs a series of graphs by interpreting the data in that folder
+# - Creates a .PDF for each folder, containing the information from each of the graphs created from it
+
+
+# The python terminal interprets the python script as a list of instructions. For example, I could write:
+##### print ('hello world') 
+# The python terminal would interpret this as an instruction to write the phrase 'hello world'
+# Alternately, we can "define" a particular variable as 'hello world', and then ask for that variable to be printed.
+# For example:
+##### horse = 'hello world'
+##### print (horse)
+# We just wrote that horse = 'hello world'. Therefore, this would also make the python terminal write the phrase 'hello world'. 
+
+
+# Below is a customisable list of "defines". You don't need to change these defines to use the script, but you may find it very helpful to do so.
+
+###########
+# Defines #
+###########
+defaultfilepath = 'N:\CCFE\H3AT\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\Eurofer, Tungsten and FeCr\ScienceRun1-D2' #'N:\CCFE\H3AT\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\Eurofer, Tungsten and FeCr\\ScienceRun3-D2\\' #write the location of the folder to search in
+
+defaultoutputfolder = 'N:\CCFE\H3AT\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\Eurofer, Tungsten and FeCr\ScienceRun1-D2\output' #'N:\CCFE\H3AT\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\Eurofer, Tungsten and FeCr\\ScienceRun3-D2\\output'
+
+daqfilename = ["daq*.csv", "daqq*.csv"] #anything in a folder that starts with "daq" and ends with ".csv" will be treated as a daq file
+diodefilename=["optic*.csv", "diode*.csv"] #anything in a folder that starts with "optic" or "diode" and ends with ".csv" will be treated as a diode file
+r1filenames = ["R1*.csv", "record*1*.csv"]  #anything in a folder that starts with "r1" or "record", and contains a 1, and ends with ".csv" will be treated as an r1 file
+r2filenames = ["R2*.csv", "record*2*.csv"] #anything in a folder that starts with "r2" or "record", and contains a 2, and ends with ".csv" will be treated as an r2 file
+
+messagefilenames = ["*info*.txt"] #anything in a folder that starts with "r2" or "record", and contains a 2, and ends with ".csv" will be treated as an r2 file
+
+
+interpolation_type ='linear'
+
+r1areacm2 = 12.82 # used to calculate coulombs
+sampleareacm2 = 7
+r2areacm2=29.16 #unused
+resistorohms = 3.7
+currentmin = 0.0000000001 #value of r1 above which we register the data, for the purposes of calculating the duration of the plasma.
+currentcutoff = 0.0002 #value of r1 below which we register the data, only used in trimming the graphs.
+
+### defines for daq
+daqXcolumn = 0 			#UNUSED. The daq increments by 1s each timestep, so range() is used instead
+daqtimestep = 1
+daqYcolumns = [2,3,4,5] 	#all columns in each sheet of the doc that contain Y data
+skipchannel = 1 #the header can sometimes be misaligned because pandas automatically throws away row 1 if there are more columns than headers
+daqheaderrow = 7 				#row of the header (i.e the column titles)
+
+### defines for diode
+diodeXcolumn = 0 			#only column in each sheet of the doc that contains the x data. This is the sample data column, giving us Time in Seconds
+diodeYcolumn = 3 # column that contains Y data. ONLY used if the separator is ';'.
+diodeYcolumnb = 1 # column that contains Y data. Used if the separator is NOT ';' 
+diodeheaderrow = 15 				#row of the header (i.e the column titles)
+smoothfactor =10 # smoothing factor for any averaging we do on the diode graph.
+
+### defines for r comparison
+rXcolumn =0 # used for interpolation. for some reason, this is adding the y values to the end of it. i dont understand why.
+rYcolumn =1 # used for interpolation
+rheaderrow = 0
+
+### defines for error messages
+filestrings = ['daq files', 'diode files', 'r1 files', 'r2 files']
+
+#imported python directories 
+from reportlab.lib.utils import ImageReader
+from reportlab.pdfgen.canvas import Canvas
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase.pdfmetrics import registerFont
+from reportlab.lib.pagesizes import A4
+import pandas as pd
+import numpy as np
+from scipy.interpolate import interp1d
+import matplotlib
+import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
+import matplotlib.axes as axes
+import matplotlib.patches as patches
+import glob
+import os
+import datetime
+import csv
+
+### defines for pdf processor
+registerFont(TTFont('georgia','C:\\windows\\fonts\\georgia.ttf'))
+img = ImageReader('N:\\CCFE\\H3AT\\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\Eurofer, Tungsten and FeCr\\ScienceRun3-D2\\output\\FinalLogo.jpg') #eurochem logo
+cwidt = 590
+cheigh = 785
+
+colours = ('#ff7f00', '#377eb8', '#999999', 'royalblue',
+                  '#f781bf',  '#4daf4a'', #a65628', '#984ea3',
+                   '#e41a1c', '#dede00', "Yellow", "Green", "Blue", "Red", "Orange", "lightgreen", "navy", "Teal",
+           "purple", "salmon", "darkgoldenrod", "lightseagreen", "darkolivegreen", "saddlebrown", "cornflowerblue",
+          "fuchsia", "grey", "darkslategray", "black", "royalblue", "rosybrown", "mediumseagreen") #will cycle through this index colouring each new graph in a new colour
+
+###################
+# Command defines #
+###################
+
+def loadfilesmatching(namelist, subfolder): # Returns an alphabetical list of files matching the name provided
+    files = []
+    for i in namelist:
+        filefind = ''.join([subfolder, '\\*', i])
+        print ('Searching ', filefind[lenfol:])
+        files = files + sorted(glob.glob(filefind,recursive=True))
+    if files != []:
+        print ('Loaded ', len(files), ' file(s): ', files)
+    return sorted(files)
+
+def formattoseconds(x): # converts time from hh:mm:ss:ms to an integer value in milliseconds. This is later multiplied by 0.01 to get a float value in seconds
+    list = []
+    dots=[i for i, j in enumerate(x[0]) if j == ':']
+    if dots != [2,5,8]:
+        print('The first data point is in a format that is unrecognised - should be hh:mm:ss:mss. the semicolons should be at position 2, 5 and 8 in the string but theyre', dots, ' instead (should be 2,5,8). Returned [0]')
+        return [0]
+    for i in x:
+        #list.append(int(i[6:8]) + (3600*int(i[0:2])) + (60*int(i[3:5])) + float('0.' + i[9:11]))
+        list.append(100*int(i[6:8]) + (360000*int(i[0:2])) + (6000*int(i[3:5])) + int(i[9:11])) #note in old versions this was definitely done incorrectly, and needs to be fixed.
+    print ('Sorted x data from hh/mm/ss/ms into milliseconds. example data point', list[0:3])
+    return sorted(list)
+
+def interpolate(r1x,r1y,r2x,r2y):
+# one of the core issues is that the timestep is very inconsistent and the value of y fluctuates.
+#Therefore, we need to know exactly which points to interpolate. Here I use buffer values for each x val without a corresponding y val
+#This zips the r1x timestep values with their y values, then zip the r2x timestep values with an endless list of buffer values, add the sets together, then sort the two sets by their x value. 
+#Then, unzip again. You now have a full list of all timesteps, and a list of all known y values with a bunch of buffers that you know you need to replace!
+#Finally, replace all the buffers at the start and end with 0 (with removeinitialbuffers)
+    r1zip = sorted((list(zip(r1x[0:], r1y[0:])) + list(zip(r2x[0:], ['n']*len(r2y)))), key = lambda t: t[0]) # timestep plus r1 y values, and placeholders (a bunch of values just called 'n')
+    r2zip = sorted((list(zip(r1x[0:], ['n']*len(r1y))) + list(zip(r2x[0:], r2y[0:]))), key = lambda t: t[0]) # timestep plus r2 values, and placeholders
+    r1ycopy= [y for x,y in r1zip]
+    r2ycopy= [y for x,y in r2zip]
+    rxcopy = [x for x,y in r1zip]
+    #next, we replace each and every buffer with an interpolated data point
+    lastval = r1ycopy[0]
+    lasteach = 0
+    print('Began interpolating', len(r1x), 'r1 x values and', len(r1y), 'r1 y values by',  len(r2x), 'r2 x values and',len(r2y), 'r2 y values')
+    f1 = interp1d(r1x, r1y, kind=interpolation_type, copy=True, bounds_error=False, fill_value=0, assume_sorted=True)
+    f2 = interp1d(r2x, r2y, kind=interpolation_type, copy=True, bounds_error=False, fill_value=0, assume_sorted=True)
+    for each,value in enumerate(r1ycopy):
+        if value == 'n':
+            r1ycopy[each]=f1(rxcopy[each])
+    for each,value in enumerate(r2ycopy):
+        if value == 'n':
+            r2ycopy[each]=f2(rxcopy[each])
+    return r1ycopy, r2ycopy, rxcopy
+
+def plotandsave(titlestring,ystring,xstring,yv): # This shows a plot and then saves it as a .png
+    plt.title(titlestring)
+    if yv is not False:
+        plt.axis(ymin=yv)
+    plt.ylabel(ystring) 			#defines labels for your graph. "D flux (N m⁻²s⁻ˡ)"
+    plt.xlabel(xstring) 
+    plt.rcParams.update({"savefig.facecolor":  ('white'),"figure.figsize": (7, 5)})  			#big nice pngs
+    savestring = ''.join([outputfolder, '/', title, ' ', titlestring, ' ', str(count+1), '.png'])
+    plt.savefig(savestring, bbox_inches='tight') #this will throw a bunch of .png files into the folder specified in filepath, overwriting anything with the same name.
+    plt.show()				#shows you the graph that was saved
+
+def dopdf(canv, listoffiles, stra, strb, strc, title, subtitle):
+    canv.drawImage(listoffiles[0],20,(2*cheigh/3)-20,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)#adds pictures in predefined locations
+    if len(listoffiles)>=2: #listen. I know how this bit of code looks. But each of the graphs needs to have its location defined individually!
+        canv.drawImage(listoffiles[1],(cwidt/2)+20,(2*cheigh/3)-20,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
+        if len(listoffiles)>=3:
+            canv.drawImage(listoffiles[2],20,(cheigh+15)/3,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
+            if len(listoffiles)>=4:
+                canv.drawImage(listoffiles[3],(cwidt/2)+20,(cheigh+15)/3,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
+                if len(listoffiles)>=5:
+                    canv.drawImage(listoffiles[4],20,20,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
+                    if len(listoffiles)>=6:
+                        canv.drawImage(listoffiles[5],(cwidt/2)+20,20,250,200,anchor='sw',anchorAtXY=True,showBoundary=False)
+    canv.setFont('georgia',14)
+    canv.setFillColor((0,0,0)) #change the text color
+    if not automodeb and (subtitle ==''):
+        subtitle=input(strsubtitle)
+    canv.drawString(20,(2*cheigh/3) +250, subtitle)#adds the subtitle string at predefined location
+    canv.drawString(20,(2*cheigh/3) +230, stra)#adds the automatically generated subtitle strings
+    canv.drawString(20,(2*cheigh/3) +210, strb)#same
+    canv.drawString(20,(2*cheigh/3) +190, strc)#same
+    canv.line(20,cheigh,cwidt-20, cheigh)
+    canv.setFont('georgia',28)
+    canv.drawString(20,cheigh+20, title)#adds title
+    print ('Generated a .pdf titled', title, 'report.pdf')
+    canv.save()
+
+#####################
+# The Actual Script #
+#####################
+
+strtitle = '\n'.join(['Paste the data directory here, or press enter to use default: ', defaultfilepath])
+filefolder = input(strtitle)
+if filefolder == '':
+    filefolder = defaultfilepath
+lenfol=len(filefolder)
+
+list_subfolders = [f.path for f in os.scandir(filefolder) if f.is_dir()]
+formatted_list_subfolders = '\n'.join([(str(each) + ':\t' + fol[lenfol:]) for (each, fol) in enumerate(list_subfolders)])
+strtitle = '\n'.join(['Found folders:', str(formatted_list_subfolders), 'Input the number of the folder you would like to run, or type anything else to run on all these folders.\nYou can also type e.g "0 4" to run on folders 0 to 4.\nFolders without data are automatically skipped.'])
+chosen_subfolders_str=input(strtitle)
+chosen_subfolders=chosen_subfolders_str.split()
+chosen_subfolders= [i for i in chosen_subfolders if i.isdigit()]
+if len(chosen_subfolders) >= 1:
+    chosen_subfolders = slice(int(chosen_subfolders[0]), int(chosen_subfolders[-1])+1)
+else: chosen_subfolders = slice(-1)
+print (chosen_subfolders)
+
+strtitle = '\n'.join(['Paste the preferred output folder here, or press enter to use default: ', defaultoutputfolder])
+outputfolder = input(strtitle)
+if outputfolder == '':
+    outputfolder = defaultoutputfolder
+previoustitles =[]
+count =0
+
+inp = input('Turn on automatic title setting? Y/N. Defaults to Y.')
+if inp in ['no', 'No', 'NO', 'n', 'N']:
+    automode = False
+else: 
+    automode = True
+    inp = input('Turn on automatic subtitle setting? This will make your subtitles blank if no information file is present. Y/N. Defaults to N.')
+    automodeb = inp in ['yes', 'Yes', 'YEs', 'heck yeah!!','YES', 'y', 'Y']
+for subfolder in list_subfolders[chosen_subfolders]:
+### load files
+    daqfiles = loadfilesmatching(daqfilename, subfolder)
+    diodefiles = loadfilesmatching(diodefilename, subfolder)
+    r1files = loadfilesmatching(r1filenames, subfolder)
+    r2files = loadfilesmatching(r2filenames, subfolder)# Does not check for mislabeling, and doesn't check whether the files are matched up correctly.
+    messagefiles = loadfilesmatching(messagefilenames, subfolder)
+    subtitle = ''
+    if messagefiles:
+        with open(messagefiles[0]) as msg:
+            subtitle = msg.read()
+            print ('Set subtitle to', subtitle)
+        
+### error messages
+    if (not daqfiles) & (not diodefiles) & (not r1files):
+        print ('No files here. Skipped!')
+        continue
+    errorhandler = [len(daqfiles), len(diodefiles), len(r1files), len(r2files)]
+    for i, no in enumerate(errorhandler):
+        if no > 1:
+            print ('Error! There are ', no, filestrings[i], 'found in this folder. Using only the first one.')
+        elif no == 0:
+            print ('Error! There are ', no, filestrings[i], 'found in this folder.')
+### title input
+    if automode:
+        title = subfolder[1+lenfol:]
+        print ('Title set as', title)
+    else:
+        strtitle = ''.join(['Input a title for the file ', subfolder[lenfol:], ', including sample no. and material. E.g S87, Eurofer'])
+        title= input(strtitle)
+    while title in previoustitles:
+        strtitle = ''.join(['That title has already been used!\nThe title can\'t be ', str(previoustitles), ', so you\'ll have to type something else'])
+        title = input(strtitle)
+        if title == 'something else':
+            title == 'bean head'
+            print ('Oh, a funny guy, are we? Taking everything literally, huh? Well the joke\'s on you: all your graphs will be titled "bean head" now.')
+    previoustitles.append(title)
+
+###daq
+    if daqfiles: #checks there are some daqfiles
+        daqfile = daqfiles[0]
+        daqdata = pd.read_csv(daqfile, header=daqheaderrow, usecols = [0]+daqYcolumns) # picks out the daq data only and discards the rest
+        datavalues = [list(x) for x in zip(*daqdata.values)]
+        datalabels = daqdata.columns
+        daqydatanos = range(1,len(daqYcolumns)+1) # this is a list of numbers equivalent to the columns in daqdata that are actually y data
+        print(datalabels)
+        x = [i*daqtimestep for i in range(len(datavalues[0]))]
+        for each in daqydatanos:
+            y = datavalues[each]
+            plt.plot(x, y, color =colours[each], linewidth = 1.5, alpha = 0.7)
+        plt.legend(datalabels[daqydatanos[skipchannel:]], bbox_to_anchor=(1, 1))
+        plt.grid()
+        plotandsave("Pressure in System", "pressure/V", "Time/S",-8)
+
+###diode
+    splist = [';', ':', '\t', ',', ' '] # column separator for diode files. may be ';' or ':' or ' ' or '/t' or ','
+    if diodefiles:
+        diodefile = diodefiles[0]
+        diodedata = pd.read_csv(diodefile, sep='&', quoting=3, encoding='utf-8', skiprows=(diodeheaderrow-1), na_values= ' No device found')
+        datavalues = [list(x) for x in zip(*diodedata.values)]
+        x = datavalues[diodeXcolumn]
+        datalabels = diodedata.columns
+        print (str(x[0]))
+        for eachsp, sp in enumerate(splist):
+            if str(sp) in str(x[0]):
+                print ('Diode file appears to use the separator: "', sp, '". Started diode file interpretation.')
+                diodedata2 = pd.read_csv(diodefile, sep=sp, quoting=3, encoding='utf-8', skiprows=(diodeheaderrow-1), na_values= ' No device found')
+                datavalues2 = [list(x) for x in zip(*diodedata2.values)]
+                x = datavalues2[diodeXcolumn]
+                diodeY = diodeYcolumn if sp == ';' else diodeYcolumnb
+                print(diodedata2.columns, x[0], diodeY)
+                y = pd.Series(datavalues2[diodeY]).rolling(window=smoothfactor).mean()
+                plt.plot(x, y, color =colours[0], linewidth = 1.5, alpha = 0.7) #plt.legend(datalabels[diodeYcolumn])
+                plt.grid()
+                plotandsave("Light Output to Diode","power/W","Time/ms",0)
+                break
+            print ('no', str(sp), 'in', str(x[0]), datalabels)
+        print('Stopped interpreting diode file')
+
+
+###r1 and r2
+    datalistlist=[]
+#r1 load data
+    if r1files and r2files: 
+        r1file = os.path.basename(r1files[0])
+        r2file = os.path.basename(r2files[0])
+        if r1file[:6]!=r2file[:6]:
+            print ('The files being used for r1 and r2 do not seem to match', r1files, r2files)
+        r1data = pd.read_csv(r1files[0], header=rheaderrow)
+        datavalues = [list(x) for x in zip(*r1data.values)]
+        r1filey = datavalues[rYcolumn]
+        r1filex = formattoseconds(datavalues[rXcolumn])
+    #r2 load data and convert to currents
+        r2data = pd.read_csv(r2files[0], header=rheaderrow)
+        datavaluesii = [list(x) for x in zip(*r2data.values)]
+        r2filey = datavaluesii[rYcolumn]  
+        r2filex = formattoseconds(datavaluesii[rXcolumn])
+        r1check = sum(r1filey[int(len(r1filey)/2):int((len(r1filey)+200)/2)])/(100*resistorohms)
+        r2check = sum(r2filey[int(len(r2filey)/2):int((len(r2filey)+200)/2)])/(100*resistorohms)
+        if r1check > r2check: #purely because this is a really common error
+            print ('Didn\'t flip r1 and r2. R1 file average (', r1check, ') > R2 file average(', r2check, ')')
+            r1x = r1filex
+            r1y = r1filey
+            r2x = r2filex
+            r2y = r2filey
+        else:
+            print ('Flipped r1 and r2. R1 file average (', r1check, ') > R2 file average (', r2check, ')')
+            r1x = r2filex
+            r1y = r2filey
+            r2x = r1filex
+            r2y = r1filey   
+        currentr2 = [yb/resistorohms for yb in r2y]
+        currentr1 = [yc/resistorohms for yc in r1y]
+    #r1 and r2 convert timestep to seconds and set both to start graphs at 0.
+        rixo = min(r1x[0], r2x[0]) #float(r1x[0]) for some reason this subtraction fails when using floats, so ints are used instead and then multiplied.
+        r2x = [0.01*(i-rixo) for i in r2x]
+        r1x = [0.01*(i-rixo) for i in r1x]
+    #calculations and interpolation 
+        r1xb = r1x[1:] #r1xb is a second timestep to speed up calcs, identical to r1y but one value forwards.
+        r1xb.append(r1x[-1])
+        zipcurrentr1 = zip(currentr1[0:], r1x[0:], r1xb[0:] ) # a zip of current, time, and the next time value
+        ziphighcurrentr1 = [(i, j, k) for (i, j, k) in zipcurrentr1 if i>=currentmin] 
+        totaltimehigh = 0 # total time
+        totalcoulombs = 0 # total coulombs
+        for (current, time, time2) in ziphighcurrentr1:
+            totaltimehigh += (time2-time)
+            totalcoulombs += (current*(time2-time))       
+        (r1, r2, rx) = interpolate(r1x,r1y,r2x,r2y)
+        r1overr2=[r1val/r2[eachh] if ((r2[eachh]<= -1e-8) or (r2[eachh]>= 1e-8)) else 0 for eachh,r1val in enumerate(r1)] #1e-8 is less than the resolution of the data. This removes 0 and erroneous floats.
+        datalist =[totaltimehigh, totalcoulombs, totalcoulombs/totaltimehigh, sum(r1overr2)/len(r1overr2)]  # in format time, total coulombs, mean current,avg r1/r2
+        #datalistlist.append(datalist) #list of lists in format time, total coulombs, mean current,avg r1/r2. Necessary if adapted to loop in folder
+        print(datalist)
+        #currentr1 = [i if i<=currentcutoff else currentcutoff for i in currentr1]
+        #currentr2 = [i if i<=currentcutoff else currentcutoff for i in currentr2]
+        fig = plt.figure()#1, [32,24]
+        axe = fig.add_subplot(1,1,1) # 1 Row, 1 Column and the first axes in this grid
+        plt.plot(r1x, currentr1, color =colours[1], linewidth = 0.1, alpha = 0.7)
+        plt.plot(r2x, currentr2, color =colours[2], linewidth = 0.1, alpha = 0.7)
+        plt.grid() 
+        axe.set_ylim([0, min(max(currentr1), 3*max(r1check, r2check))])
+        leg = plt.legend(['R1', 'R2'], bbox_to_anchor=(1, 1)) 
+        for line in leg.get_lines(): #Formats legend to use a wider linewidth. Thank you Adam
+            line.set_linewidth(6.0)
+        plotandsave("Current Data against Time","Current/A", "Time/S",False)
+        plt.plot(r1overr2, r1, '.', color = colours[3], alpha = 0.7) 
+        plt.grid()
+        plotandsave("R1 ÷ R2 against R1","Current Ratio (R1/R2)", "R1 Current/A",False)
+        fig3 = plt.figure()
+        axe3 = fig3.add_subplot(1,1,1) # 1 Row, 1 Column and the first axes in this grid
+        plt.plot(rx, r1overr2, color =colours[3], linewidth = 0.1, alpha = 0.7)
+        axe3.set_ylim([-2, 6])
+        plt.grid()
+        plotandsave("R1 ÷ R2 over time","Current Ratio (R1/R2)", "Time/S",False)
+    else:
+        datalist = [0,0,0,0]
+
+    strsubtitle = ''.join(['Input a subtitle for file ', title, '. You may want to include the data on magnetron, anode, extractor, treatment temp. \nE.g 0.0 DPA, 5 hours, 40mA magnetron, 400V anode, -200V extractor, room temperature. \n You can copy paste this from Tricem\Documents\ElectronicLogs\ on the n drive'])
+    filepath = ''.join([outputfolder, '/', title, ' *' ]) # this is used to search for the PNG files produced above
+    canvname = ''.join([outputfolder, '/!', title, ' report.pdf'])
+    canv = Canvas(canvname,pagesize=A4)
+    canv.drawImage(img, 280, cheigh, 280, 35,anchor='sw',anchorAtXY=True,showBoundary=False)
+    listoffiles = sorted(glob.glob(filepath,recursive=True))
+    seconds = datalist[0]
+    minutes, seconds = divmod(seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    currentdate = datetime.date.today()
+    stringlist = ['Total R1 Charge:', format(datalist[1], '.2f'), 'C. Average R1 current:', format(datalist[2], '.3e'), 'A', 'Average R1/R2:',
+                  format(datalist[3], '.2f'), ', Plasma Duration:', str(hours),'Hr',str(minutes),'min',format(seconds, '.2f'), 's.', 'Graphs generated', str(currentdate)]
+    stra = ' '.join(stringlist[:5])
+    strb = ' '.join(stringlist[5:14])
+    strc = ' '.join(stringlist[14:])
+    print (stra, strb, strc)
+    dopdf(canv, listoffiles, stra, strb, strc, title, subtitle)
+print ('"My work here is done." The python removes its sunglasses, revealing a pair of slightly smaller sunglasses, and exits the room.')
