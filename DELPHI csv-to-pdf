@@ -4,12 +4,12 @@
                                            ##### READ ME #####
 
 # This is a python script - some text that can be copied and pasted into a python terminal.
-# You can install a python
+# You can go to https://docs.anaconda.com/anaconda/install/ to install anaconda, which I use
 
 
 # This python script does the following:
 # - Reads each subfolder in a folder, searching for files whose names match certain criteria.
-# - outputs a series of graphs by interpreting the data in that folder
+# - outputs a series of graphs by processing the data in those files
 # - Creates a .PDF for each folder, containing the information from each of the graphs created from it
 
 
@@ -37,14 +37,17 @@ diodefilename=["optic*.csv", "diode*.csv"] #anything in a folder that starts wit
 r1filenames = ["R1*.csv", "record*1*.csv"]  #anything in a folder that starts with "r1" or "record", and contains a 1, and ends with ".csv" will be treated as an r1 file
 r2filenames = ["R2*.csv", "record*2*.csv"] #anything in a folder that starts with "r2" or "record", and contains a 2, and ends with ".csv" will be treated as an r2 file
 
-messagefilenames = ["*info*.txt"] #anything in a folder that starts with "r2" or "record", and contains a 2, and ends with ".csv" will be treated as an r2 file
+messagefilenames = ["info*.txt"] #anything in a folder that starts with "info" and ends with ".txt" will be read and used as a subtitle for the pdf.
 
-
-interpolation_type ='linear'
+interpolation_type ='linear' # Method of interpolation used by scipy.interpolate.interp1d to interpolate r2 by r1 to get 
+                             # The string has to be one of ‘linear’, ‘nearest’, ‘nearest-up’, ‘zero’, ‘slinear’, ‘quadratic’, ‘cubic’, ‘previous’, or ‘next’. 
+                             # ‘zero’, ‘slinear’, ‘quadratic’ and ‘cubic’ refer to a spline interpolation of zeroth, first, second or third order;
+                             #‘previous’ and ‘next’ simply return the previous or next value of the point; ‘nearest-up’ and ‘nearest’ differ when interpolating half-integers (e.g. 0.5, 1.5) in that ‘nearest-up’ rounds up and ‘nearest’ rounds down. 
+                             # Default is ‘linear’.
 
 r1areacm2 = 12.82 # used to calculate coulombs
 sampleareacm2 = 7
-r2areacm2=29.16 #unused
+r2areacm2 = 29.16 # unused
 resistorohms = 3.7
 currentmin = 0.0000000001 #value of r1 above which we register the data, for the purposes of calculating the duration of the plasma.
 currentcutoff = 0.0002 #value of r1 below which we register the data, only used in trimming the graphs.
