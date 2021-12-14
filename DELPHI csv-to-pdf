@@ -1,13 +1,13 @@
 ##### henry.smith@ukaea.uk 
-## Version 1.0.2
+## Version 1.0.4
 
                                            ##### READ ME #####
 
 # This is a python script - some text that can be copied and pasted into a python terminal.
 # It does the following:
-# - Reads each subfolder in a folder, searching for files whose names match certain criteria.
-# - outputs a series of graphs by interpreting the data in that folder
-# - Creates a .PDF for each folder, containing the information from each of the graphs created from it
+# - Reads each folder in a chosen file location, searching for files whose names match certain criteria.
+# - outputs a series of graphs as image files by interpreting the data in that folder
+# - Creates a .PDF for each folder, containing the information from each of the graphs and from the folder itself
 
 
 # The python terminal interprets the python script as a list of instructions. For example, I could write:
@@ -25,19 +25,26 @@
 ###########
 # Defines #
 ###########
-defaultfilepath = 'N:\CCFE\H3AT\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\TRiCEM- Eurofer, Tungsten and FeCr\ScienceRun1-D2' #'N:\CCFE\H3AT\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\Eurofer, Tungsten and FeCr\\ScienceRun3-D2\\' #write the location of the folder to search in
 
+# You will be able to input a filepath and output folder each time you run the file. If you enter nothing, it defaults to the options below. You can change these options.
+defaultfilepath = 'N:\CCFE\H3AT\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\TRiCEM- Eurofer, Tungsten and FeCr\ScienceRun1-D2' #'N:\CCFE\H3AT\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\Eurofer, Tungsten and FeCr\\ScienceRun3-D2\\'
 defaultoutputfolder = 'N:\CCFE\H3AT\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\TRiCEM- Eurofer, Tungsten and FeCr\ScienceRun1-D2\output' #'N:\CCFE\H3AT\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\Eurofer, Tungsten and FeCr\\ScienceRun3-D2\\output'
+
+
 
 daqfilename = ["daq*.csv", "daqq*.csv"] #anything in a folder that starts with "daq" and ends with ".csv" will be treated as a daq file
 diodefilename=["optic*.csv", "diode*.csv"] #anything in a folder that starts with "optic" or "diode" and ends with ".csv" will be treated as a diode file
 r1filenames = ["R1*.csv", "record*1*.csv"]  #anything in a folder that starts with "r1" or "record", and contains a 1, and ends with ".csv" will be treated as an r1 file
 r2filenames = ["R2*.csv", "record*2*.csv"] #anything in a folder that starts with "r2" or "record", and contains a 2, and ends with ".csv" will be treated as an r2 file
 
-messagefilenames = ["*info*.txt"] #anything in a folder that starts with "r2" or "record", and contains a 2, and ends with ".csv" will be treated as an r2 file
+messagefilenames = ["*info*.txt"] #anything in a folder that starts with "info", and ends with ".txt" will be treated as a subtitle file and will be set as a subtitle.
 
 
-interpolation_type ='linear'
+interpolation_type ='linear' # Method of interpolation used by scipy.interpolate.interp1d to interpolate r2 by r1 to get our graphs
+                             # The string has to be one of ‘linear’, ‘nearest’, ‘nearest-up’, ‘zero’, ‘slinear’, ‘quadratic’, ‘cubic’, ‘previous’, or ‘next’. 
+                             # ‘zero’, ‘slinear’, ‘quadratic’ and ‘cubic’ refer to a spline interpolation of zeroth, first, second or third order;
+                             #‘previous’ and ‘next’ simply return the previous or next value of the point; ‘nearest-up’ and ‘nearest’ differ when interpolating half-integers (e.g. 0.5, 1.5) in that ‘nearest-up’ rounds up and ‘nearest’ rounds down. 
+                             # Default is ‘linear’.
 
 r1areacm2 = 12.82 # used to calculate coulombs
 sampleareacm2 = 7
@@ -89,7 +96,7 @@ import csv
 
 ### defines for pdf processor
 registerFont(TTFont('georgia','C:\\windows\\fonts\\georgia.ttf'))
-img = ImageReader('N:\\CCFE\\H3AT\\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\TRiCEM- Eurofer, Tungsten and FeCr\\ScienceRun3-D2\\output\\FinalLogo.jpg') #eurochem logo
+img = ImageReader('N:\\CCFE\\H3AT\\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\TRiCEM- Eurofer, Tungsten and FeCr\\ScienceRun3-D2\\output\\FinalLogo.jpg') #UKAEA logo
 cwidt = 590
 cheigh = 785
 
