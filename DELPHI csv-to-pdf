@@ -1,15 +1,12 @@
 ##### henry.smith@ukaea.uk 
-## Version 1.0.3
+## Version 1.0.2
 
                                            ##### READ ME #####
 
 # This is a python script - some text that can be copied and pasted into a python terminal.
-# You can go to https://docs.anaconda.com/anaconda/install/ to install anaconda, which I use
-
-
-# This python script does the following:
+# It does the following:
 # - Reads each subfolder in a folder, searching for files whose names match certain criteria.
-# - outputs a series of graphs by processing the data in those files
+# - outputs a series of graphs by interpreting the data in that folder
 # - Creates a .PDF for each folder, containing the information from each of the graphs created from it
 
 
@@ -28,26 +25,23 @@
 ###########
 # Defines #
 ###########
-defaultfilepath = 'N:\CCFE\H3AT\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\Eurofer, Tungsten and FeCr\ScienceRun1-D2' #'N:\CCFE\H3AT\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\Eurofer, Tungsten and FeCr\\ScienceRun3-D2\\' #write the location of the folder to search in
+defaultfilepath = 'N:\CCFE\H3AT\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\TRiCEM- Eurofer, Tungsten and FeCr\ScienceRun1-D2' #'N:\CCFE\H3AT\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\Eurofer, Tungsten and FeCr\\ScienceRun3-D2\\' #write the location of the folder to search in
 
-defaultoutputfolder = 'N:\CCFE\H3AT\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\Eurofer, Tungsten and FeCr\ScienceRun1-D2\output' #'N:\CCFE\H3AT\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\Eurofer, Tungsten and FeCr\\ScienceRun3-D2\\output'
+defaultoutputfolder = 'N:\CCFE\H3AT\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\TRiCEM- Eurofer, Tungsten and FeCr\ScienceRun1-D2\output' #'N:\CCFE\H3AT\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\Eurofer, Tungsten and FeCr\\ScienceRun3-D2\\output'
 
 daqfilename = ["daq*.csv", "daqq*.csv"] #anything in a folder that starts with "daq" and ends with ".csv" will be treated as a daq file
 diodefilename=["optic*.csv", "diode*.csv"] #anything in a folder that starts with "optic" or "diode" and ends with ".csv" will be treated as a diode file
 r1filenames = ["R1*.csv", "record*1*.csv"]  #anything in a folder that starts with "r1" or "record", and contains a 1, and ends with ".csv" will be treated as an r1 file
 r2filenames = ["R2*.csv", "record*2*.csv"] #anything in a folder that starts with "r2" or "record", and contains a 2, and ends with ".csv" will be treated as an r2 file
 
-messagefilenames = ["info*.txt"] #anything in a folder that starts with "info" and ends with ".txt" will be read and used as a subtitle for the pdf.
+messagefilenames = ["*info*.txt"] #anything in a folder that starts with "r2" or "record", and contains a 2, and ends with ".csv" will be treated as an r2 file
 
-interpolation_type ='linear' # Method of interpolation used by scipy.interpolate.interp1d to interpolate r2 by r1 to get 
-                             # The string has to be one of ‘linear’, ‘nearest’, ‘nearest-up’, ‘zero’, ‘slinear’, ‘quadratic’, ‘cubic’, ‘previous’, or ‘next’. 
-                             # ‘zero’, ‘slinear’, ‘quadratic’ and ‘cubic’ refer to a spline interpolation of zeroth, first, second or third order;
-                             #‘previous’ and ‘next’ simply return the previous or next value of the point; ‘nearest-up’ and ‘nearest’ differ when interpolating half-integers (e.g. 0.5, 1.5) in that ‘nearest-up’ rounds up and ‘nearest’ rounds down. 
-                             # Default is ‘linear’.
+
+interpolation_type ='linear'
 
 r1areacm2 = 12.82 # used to calculate coulombs
 sampleareacm2 = 7
-r2areacm2 = 29.16 # unused
+r2areacm2=29.16 #unused
 resistorohms = 3.7
 currentmin = 0.0000000001 #value of r1 above which we register the data, for the purposes of calculating the duration of the plasma.
 currentcutoff = 0.0002 #value of r1 below which we register the data, only used in trimming the graphs.
@@ -95,7 +89,7 @@ import csv
 
 ### defines for pdf processor
 registerFont(TTFont('georgia','C:\\windows\\fonts\\georgia.ttf'))
-img = ImageReader('N:\\CCFE\\H3AT\\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\Eurofer, Tungsten and FeCr\\ScienceRun3-D2\\output\\FinalLogo.jpg') #eurochem logo
+img = ImageReader('N:\\CCFE\\H3AT\\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\TRiCEM- Eurofer, Tungsten and FeCr\\ScienceRun3-D2\\output\\FinalLogo.jpg') #eurochem logo
 cwidt = 590
 cheigh = 785
 
@@ -221,12 +215,12 @@ if outputfolder == '':
 previoustitles =[]
 count =0
 
-inp = input('Turn on automatic title setting? Y/N. Defaults to Y.')
+inp = input('Turn on automatic title setting? This sets the title as the folder name, rather than asking for user input. Y/N. Defaults to Y.')
 if inp in ['no', 'No', 'NO', 'n', 'N']:
     automode = False
 else: 
     automode = True
-    inp = input('Turn on automatic subtitle setting? This will make your subtitles blank if no information file is present. Y/N. Defaults to N.')
+    inp = input('Turn on automatic subtitle setting? This will not prompt you to input a subtitle when the subtitle file is missing - resulting in a blank subtitle. Y/N. Defaults to N.')
     automodeb = inp in ['yes', 'Yes', 'YEs', 'heck yeah!!','YES', 'y', 'Y']
 for subfolder in list_subfolders[chosen_subfolders]:
 ### load files
