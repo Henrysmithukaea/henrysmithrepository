@@ -76,6 +76,7 @@ rheaderrow = 0
 filestrings = ['daq files', 'diode files', 'r1 files', 'r2 files']
 
 #imported python directories 
+import reportlab # if this doesn't work, type "  pip install reportlab  " into the python terminal and execute it
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen.canvas import Canvas
 from reportlab.pdfbase.ttfonts import TTFont
