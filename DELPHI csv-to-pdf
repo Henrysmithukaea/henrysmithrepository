@@ -228,8 +228,8 @@ if inp in ['no', 'No', 'NO', 'n', 'N']:
     automode = False
 else: 
     automode = True
-    inp = input('Turn on automatic subtitle setting? This will not prompt you to input a subtitle when the subtitle file is missing - resulting in a blank subtitle. Y/N. Defaults to N.')
-    automodeb = inp in ['yes', 'Yes', 'YEs', 'heck yeah!!','YES', 'y', 'Y']
+inp = input('Turn on automatic subtitle setting? This will not prompt you to input a subtitle when the subtitle file is missing - resulting in a blank subtitle. Y/N. Defaults to N.')
+automodeb = inp in ['yes', 'Yes', 'YEs', 'heck yeah!!','YES', 'y', 'Y']
 for subfolder in list_subfolders[chosen_subfolders]:
 ### load files
     daqfiles = loadfilesmatching(daqfilename, subfolder)
