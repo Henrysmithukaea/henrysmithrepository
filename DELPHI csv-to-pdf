@@ -27,14 +27,14 @@
 ###########
 
 # You will be able to input a filepath and output folder each time you run the file. If you enter nothing, it defaults to the options below. You can change these options.
-defaultfilepath = 'N:\CCFE\H3AT\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\TRiCEM- Eurofer, Tungsten and FeCr\ScienceRun1-D2' #'N:\CCFE\H3AT\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\Eurofer, Tungsten and FeCr\\ScienceRun3-D2\\'
-defaultoutputfolder = 'N:\CCFE\H3AT\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\TRiCEM- Eurofer, Tungsten and FeCr\ScienceRun1-D2\output' #'N:\CCFE\H3AT\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\Eurofer, Tungsten and FeCr\\ScienceRun3-D2\\output'
+defaultfilepath = 'N:\CCFE\H3AT\TritiumScience\TSG Members\Ali' #N:\CCFE\H3AT\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\Eurofer, Tungsten and FeCr\\ScienceRun3-D2\\
+defaultoutputfolder = 'N:\CCFE\H3AT\TritiumScience\TSG Members\Ali\output2' #N:\CCFE\H3AT\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\Eurofer, Tungsten and FeCr\\ScienceRun3-D2\\output'
 
 
 
 daqfilename = ["daq*.csv", "daqq*.csv"] #anything in a folder that starts with "daq" and ends with ".csv" will be treated as a daq file
 diodefilename=["optic*.csv", "diode*.csv"] #anything in a folder that starts with "optic" or "diode" and ends with ".csv" will be treated as a diode file
-r1filenames = ["R1*.csv", "record*1*.csv"]  #anything in a folder that starts with "r1" or "record", and contains a 1, and ends with ".csv" will be treated as an r1 file
+r1filenames = ["R1*.csv", "record*1*.csv", "record*1*.xlsx", "R1*.xlsx"]  #anything in a folder that starts with "r1" or "record", and contains a 1, and ends with ".csv" will be treated as an r1 file
 r2filenames = ["R2*.csv", "record*2*.csv"] #anything in a folder that starts with "r2" or "record", and contains a 2, and ends with ".csv" will be treated as an r2 file
 
 messagefilenames = ["*info*.txt"] #anything in a folder that starts with "info", and ends with ".txt" will be treated as a subtitle file and will be set as a subtitle.
@@ -74,9 +74,10 @@ rheaderrow = 0
 
 ### defines for error messages
 filestrings = ['daq files', 'diode files', 'r1 files', 'r2 files']
+stringcomplete = '"My work here is done." The python removes its sunglasses, revealing a pair of slightly smaller sunglasses, and exits the room.'
 
 #imported python directories 
-import reportlab # if this doesn't work, type "  pip install reportlab  " into the python terminal and execute it
+import reportlab
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen.canvas import Canvas
 from reportlab.pdfbase.ttfonts import TTFont
@@ -125,12 +126,22 @@ def formattoseconds(x): # converts time from hh:mm:ss:ms to an integer value in 
     list = []
     dots=[i for i, j in enumerate(x[0]) if j == ':']
     if dots != [2,5,8]:
-        print('The first data point is in a format that is unrecognised - should be hh:mm:ss:mss. the semicolons should be at position 2, 5 and 8 in the string but theyre', dots, ' instead (should be 2,5,8). Returned [0]')
+        print('The first data point is in a format that is unrecognised - should be hh:mm:ss:mss. the semicolons should be at position 2, 5 and 8 in the string.', dots, ' instead (should be 2,5,8). Returned [0]')
         return [0]
-    for i in x:
-        #list.append(int(i[6:8]) + (3600*int(i[0:2])) + (60*int(i[3:5])) + float('0.' + i[9:11]))
-        list.append(100*int(i[6:8]) + (360000*int(i[0:2])) + (6000*int(i[3:5])) + int(i[9:11])) #note in old versions this was definitely done incorrectly, and needs to be fixed.
-    print ('Sorted x data from hh/mm/ss/ms into milliseconds. example data point', list[0:3])
+    for j in x:
+        k = datetime.datetime.strptime(str(j),"%H:%M:%S:%f")
+        milliseconds = (k - datetime.datetime(1900, 1, 1)) // datetime.timedelta(milliseconds=1)
+        list.append(int(milliseconds)) 
+        #I rewrote this code to handle values very accurately but this still doesn't let you generate a .csv file in excel.
+        
+        # If possible, please copy and modify a .CSV file using wordpad.
+        # If you want to make a .csv made in excel into something usable;
+        #1: Open the csv file in WordPad
+        #2: Delete all the garbage lines that say ",, ,,". You can do this by copying your data, ctrl+a, backspace, paste your 
+        #3: Save, and don't open again in excel (just to be sure)
+        
+        
+    print ('Sorted x data from hh/mm/ss/mss into milliseconds. example data point', list[0:3])
     return sorted(list)
 
 def interpolate(r1x,r1y,r2x,r2y):
@@ -145,8 +156,6 @@ def interpolate(r1x,r1y,r2x,r2y):
     r2ycopy= [y for x,y in r2zip]
     rxcopy = [x for x,y in r1zip]
     #next, we replace each and every buffer with an interpolated data point
-    lastval = r1ycopy[0]
-    lasteach = 0
     print('Began interpolating', len(r1x), 'r1 x values and', len(r1y), 'r1 y values by',  len(r2x), 'r2 x values and',len(r2y), 'r2 y values')
     f1 = interp1d(r1x, r1y, kind=interpolation_type, copy=True, bounds_error=False, fill_value=0, assume_sorted=True)
     f2 = interp1d(r2x, r2y, kind=interpolation_type, copy=True, bounds_error=False, fill_value=0, assume_sorted=True)
@@ -228,8 +237,8 @@ if inp in ['no', 'No', 'NO', 'n', 'N']:
     automode = False
 else: 
     automode = True
-inp = input('Turn on automatic subtitle setting? This will not prompt you to input a subtitle when the subtitle file is missing - resulting in a blank subtitle. Y/N. Defaults to N.')
-automodeb = inp in ['yes', 'Yes', 'YEs', 'heck yeah!!','YES', 'y', 'Y']
+    inp = input('Turn on automatic subtitle setting? This will not prompt you to input a subtitle when the subtitle file is missing - resulting in a blank subtitle. Y/N. Defaults to N.')
+    automodeb = inp in ['yes', 'Yes', 'YEs','YES', 'y', 'Y']
 for subfolder in list_subfolders[chosen_subfolders]:
 ### load files
     daqfiles = loadfilesmatching(daqfilename, subfolder)
@@ -264,8 +273,7 @@ for subfolder in list_subfolders[chosen_subfolders]:
         strtitle = ''.join(['That title has already been used!\nThe title can\'t be ', str(previoustitles), ', so you\'ll have to type something else'])
         title = input(strtitle)
         if title == 'something else':
-            title == 'bean head'
-            print ('Oh, a funny guy, are we? Taking everything literally, huh? Well the joke\'s on you: all your graphs will be titled "bean head" now.')
+            print ('Oh, a funny guy, are we?')
     previoustitles.append(title)
 
 ###daq
@@ -345,8 +353,8 @@ for subfolder in list_subfolders[chosen_subfolders]:
         currentr1 = [yc/resistorohms for yc in r1y]
     #r1 and r2 convert timestep to seconds and set both to start graphs at 0.
         rixo = min(r1x[0], r2x[0]) #float(r1x[0]) for some reason this subtraction fails when using floats, so ints are used instead and then multiplied.
-        r2x = [0.01*(i-rixo) for i in r2x]
-        r1x = [0.01*(i-rixo) for i in r1x]
+        r2x = [0.001*(i-rixo) for i in r2x]
+        r1x = [0.001*(i-rixo) for i in r1x]
     #calculations and interpolation 
         r1xb = r1x[1:] #r1xb is a second timestep to speed up calcs, identical to r1y but one value forwards.
         r1xb.append(r1x[-1])
@@ -356,7 +364,7 @@ for subfolder in list_subfolders[chosen_subfolders]:
         totalcoulombs = 0 # total coulombs
         for (current, time, time2) in ziphighcurrentr1:
             totaltimehigh += (time2-time)
-            totalcoulombs += (current*(time2-time))       
+            totalcoulombs += (current*(time2-time))  
         (r1, r2, rx) = interpolate(r1x,r1y,r2x,r2y)
         r1overr2=[r1val/r2[eachh] if ((r2[eachh]<= -1e-8) or (r2[eachh]>= 1e-8)) else 0 for eachh,r1val in enumerate(r1)] #1e-8 is less than the resolution of the data. This removes 0 and erroneous floats.
         datalist =[totaltimehigh, totalcoulombs, totalcoulombs/totaltimehigh, sum(r1overr2)/len(r1overr2)]  # in format time, total coulombs, mean current,avg r1/r2
@@ -403,4 +411,4 @@ for subfolder in list_subfolders[chosen_subfolders]:
     strc = ' '.join(stringlist[14:])
     print (stra, strb, strc)
     dopdf(canv, listoffiles, stra, strb, strc, title, subtitle)
-print ('"My work here is done." The python removes its sunglasses, revealing a pair of slightly smaller sunglasses, and exits the room.')
+print (stringcomplete)
