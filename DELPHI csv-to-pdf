@@ -30,8 +30,6 @@
 defaultfilepath = 'N:\CCFE\H3AT\TritiumScience\TSG Members\Ali' #N:\CCFE\H3AT\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\Eurofer, Tungsten and FeCr\\ScienceRun3-D2\\
 defaultoutputfolder = 'N:\CCFE\H3AT\TritiumScience\TSG Members\Ali\output2' #N:\CCFE\H3AT\TritiumScience\\01_Projects\\0003_TRiCEM\\500_Projects\\Eurofer, Tungsten and FeCr\\ScienceRun3-D2\\output'
 
-
-
 daqfilename = ["daq*.csv", "daqq*.csv"] #anything in a folder that starts with "daq" and ends with ".csv" will be treated as a daq file
 diodefilename=["optic*.csv", "diode*.csv"] #anything in a folder that starts with "optic" or "diode" and ends with ".csv" will be treated as a diode file
 r1filenames = ["R1*.csv", "record*1*.csv", "record*1*.xlsx", "R1*.xlsx"]  #anything in a folder that starts with "r1" or "record", and contains a 1, and ends with ".csv" will be treated as an r1 file
@@ -86,7 +84,6 @@ from reportlab.lib.pagesizes import A4
 import pandas as pd
 import numpy as np
 from scipy.interpolate import interp1d
-import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import matplotlib.axes as axes
@@ -125,13 +122,13 @@ def loadfilesmatching(namelist, subfolder): # Returns an alphabetical list of fi
 def formattoseconds(x): # converts time from hh:mm:ss:ms to an integer value in milliseconds. This is later multiplied by 0.01 to get a float value in seconds
     list = []
     dots=[i for i, j in enumerate(x[0]) if j == ':']
-    if dots != [2,5,8]:
-        print('The first data point is in a format that is unrecognised - should be hh:mm:ss:mss. the semicolons should be at position 2, 5 and 8 in the string.', dots, ' instead (should be 2,5,8). Returned [0]')
+    if len(dots) != 3:
+        print('The first data point is in a format that is unrecognised - should be hh:mm:ss:mss. There are meant to be 3 colons, not ', len(dots))
         return [0]
     for j in x:
         k = datetime.datetime.strptime(str(j),"%H:%M:%S:%f")
-        milliseconds = (k - datetime.datetime(1900, 1, 1)) // datetime.timedelta(milliseconds=1)
-        list.append(int(milliseconds)) 
+        milliseconds = (k - datetime.datetime(1900, 1, 1)) // datetime.timedelta(milliseconds=1) # This takes the time, subtracts the epoch (all times are stored as the time after 1/1/1900), and then divides it by 1 millisecond to get a number of milliseconds.
+        list.append(int(milliseconds))
         #I rewrote this code to handle values very accurately but this still doesn't let you generate a .csv file in excel.
         
         # If possible, please copy and modify a .CSV file using wordpad.
@@ -139,7 +136,6 @@ def formattoseconds(x): # converts time from hh:mm:ss:ms to an integer value in 
         #1: Open the csv file in WordPad
         #2: Delete all the garbage lines that say ",, ,,". You can do this by copying your data, ctrl+a, backspace, paste your 
         #3: Save, and don't open again in excel (just to be sure)
-        
         
     print ('Sorted x data from hh/mm/ss/mss into milliseconds. example data point', list[0:3])
     return sorted(list)
@@ -358,13 +354,15 @@ for subfolder in list_subfolders[chosen_subfolders]:
     #calculations and interpolation 
         r1xb = r1x[1:] #r1xb is a second timestep to speed up calcs, identical to r1y but one value forwards.
         r1xb.append(r1x[-1])
-        zipcurrentr1 = zip(currentr1[0:], r1x[0:], r1xb[0:] ) # a zip of current, time, and the next time value
-        ziphighcurrentr1 = [(i, j, k) for (i, j, k) in zipcurrentr1 if i>=currentmin] 
+        currentr1b = currentr1[1:]
+        currentr1b.append(r1x[-1])
+        zipcurrentr1 = zip(currentr1[0:], r1x[0:], r1xb[0:], currentr1b[0:]) # a zip of current, time, and the next time value
+        ziphighcurrentr1 = [(i, j, k,l) for (i, j, k,l) in zipcurrentr1 if i>=currentmin] 
         totaltimehigh = 0 # total time
         totalcoulombs = 0 # total coulombs
-        for (current, time, time2) in ziphighcurrentr1:
+        for (current, time, time2, current2) in ziphighcurrentr1:
             totaltimehigh += (time2-time)
-            totalcoulombs += (current*(time2-time))  
+            totalcoulombs += (((current2+current)/2)*(time2-time))  # Area under graph
         (r1, r2, rx) = interpolate(r1x,r1y,r2x,r2y)
         r1overr2=[r1val/r2[eachh] if ((r2[eachh]<= -1e-8) or (r2[eachh]>= 1e-8)) else 0 for eachh,r1val in enumerate(r1)] #1e-8 is less than the resolution of the data. This removes 0 and erroneous floats.
         datalist =[totaltimehigh, totalcoulombs, totalcoulombs/totaltimehigh, sum(r1overr2)/len(r1overr2)]  # in format time, total coulombs, mean current,avg r1/r2
