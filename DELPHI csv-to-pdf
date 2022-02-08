@@ -402,8 +402,21 @@ for subfolder in list_subfolders[chosen_subfolders]:
     minutes, seconds = divmod(seconds, 60)
     hours, minutes = divmod(minutes, 60)
     currentdate = datetime.date.today()
-    stringlist = ['Total R1 Charge:', format(datalist[1], '.2f'), 'C. Average R1 current:', format(datalist[2], '.3e'), 'A', 'Average R1/R2:',
-                  format(datalist[3], '.2f'), ', Plasma Duration:', str(hours),'Hr',str(minutes),'min',format(seconds, '.2f'), 's.', 'Graphs generated', str(currentdate)]
+    try:
+        area=float(input('input a number for sample area or press enter to use the default (1)')) #this section allows you to input anything and then processes it if it's a number between 1 and 10.
+    except ValueError: # prevents the program from throwing an error message if you input text not a number
+        print("Not a number - using default") 
+        area ='1'
+    else:
+        if 0<area<=10:
+            datalist[1]=datalist[1]*area
+            area=str(area)
+        else:
+            print("Number is too large or too small - using default.")
+            area ='1'
+    stringlist = ['Total R1 Charge:', format(datalist[1], '.2f'), 'C. Average R1 current:', format(datalist[2], '.3e'), 'A',
+                      'Average R1/R2:', format(datalist[3], '.2f'), ', Plasma Duration:', str(hours),'Hr',str(minutes),'min',format(seconds, '.2f'), 's,',
+                      '=', format(datalist[0], '.2f'), 's. Area = ', area, 'cm². Graphs generated', str(currentdate)]
     stra = ' '.join(stringlist[:5])
     strb = ' '.join(stringlist[5:14])
     strc = ' '.join(stringlist[14:])
